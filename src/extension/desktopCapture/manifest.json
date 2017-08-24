@@ -19,9 +19,8 @@
       "all_frames": true,
       "run_at": "document_end",
       "matches": [
-        "http://localhost:8082/*",
-        "https://paf.szzt.com/*",
-        "http://paf.szzt.com/*"
+        "http://*/*",
+        "https://*/*"
       ]
     }
   ],

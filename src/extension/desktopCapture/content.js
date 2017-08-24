@@ -6,7 +6,6 @@ port.onMessage.addListener(message => {
 })
 
 window.addEventListener('message', event => {
-  console.log(event)
   // 不接收非前端页面指令
   if (event.source !== window || typeof event.data.cmd === 'undefined') return
 

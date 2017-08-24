@@ -34,7 +34,6 @@ export class Screen extends Recorder {
 
         // 询问插件是否存在消息监听函数
         let isExisting = evt => {
-          console.log(evt)
           if (evt.origin === window.location.origin) {
             let data = evt.data
             if (data === 'true') {
@@ -99,7 +98,7 @@ export class Screen extends Recorder {
    */
   async start (options = {}) {
     // 建立 websocket 连接
-    // await super[connect]()
+    await super[connect]()
 
     // 构造 MediaTrackConstraints
     let constraints = this[createConstraints](options)

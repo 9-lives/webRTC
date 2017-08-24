@@ -19,7 +19,7 @@
   export default {
     data () {
       return {
-        camera: undefined,
+        screen: undefined,
         url: undefined
       }
     },
@@ -27,7 +27,7 @@
       this.begin()
     },
     beforeDestroy () {
-      this.camera.close()
+      this.screen.close()
       if (typeof this.url !== 'undefined') {
         window.URL.revokeObjectURL(this.url)
       }
@@ -51,10 +51,10 @@
 
         Object.assign(evtPairs, {errHandler: this.errHandler})
 
-        this.camera._rtcEvtsSubscribe({ pairs: evtPairs })
+        this.screen._rtcEvtsSubscribe({ pairs: evtPairs })
       },
       async connExts () {
-        let ret = await this.camera.connExts({
+        let ret = await this.screen.connExts({
           cTimeout: 5000,
           pTimeout: 15000
         })
@@ -70,7 +70,7 @@
           value
         } = options
 
-        switch(type) {
+        switch (type) {
           case 'websocket':
             // websocket 错误
             break
@@ -78,7 +78,7 @@
       },
       init () {
         try {
-          this.camera = new Screen({
+          this.screen = new Screen({
             wsIp: webRtcConfig.recScreenUrl
           })
         } catch (err) {
@@ -93,7 +93,7 @@
       },
       async recScreen () {
         try {
-          let ret = await this.camera.recScreen()
+          let ret = await this.screen.recScreen()
 
           if (ret === false) {
             log.e('录屏失败')
@@ -110,7 +110,7 @@
         }
       },
       async start () {
-        let ret = await this.camera.start({
+        let ret = await this.screen.start({
           videoId: 'aaa',
           duration: 6000,
           timeSlice: 3000

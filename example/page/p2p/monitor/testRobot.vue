@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="block">
-      <video id="vido" autoplay width=400 height=300 ></video>
+      <video autoplay width=400 height=300 ></video>
     </div>
     <div class="block">
       <button @click="start">开启连接</button>

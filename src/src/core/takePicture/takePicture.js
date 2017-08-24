@@ -75,7 +75,7 @@ export class TakePicture extends RtcCommon {
       log.d('拍照成功')
       return true
     } else {
-      log.e('拍照失败')
+      log.e('拍照失败[流媒体未激活]')
       return false
     }
   }

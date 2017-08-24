@@ -20,7 +20,7 @@ export class Rec extends Recorder {
     } = options
 
     // 建立 websocket 连接
-    // await super[connect]()
+    await super[connect]()
 
     if (!isUndefined(videoId)) {
       this.video = super[getVideoById](videoId)

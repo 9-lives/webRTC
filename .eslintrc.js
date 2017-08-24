@@ -24,6 +24,6 @@ module.exports = {
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
     // 允许定义未使用的变量
-    "no-unused-vars": 1
+    "no-unused-vars": 0
   }
 }
