@@ -24,5 +24,5 @@ export const webRtcConfig = {
   /**
    * p2p 建立连接超时时间(秒)
    */
-  p2pConnTimeout: 10
+  p2pConnTimeout: 8
 }

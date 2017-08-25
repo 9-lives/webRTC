@@ -1,4 +1,6 @@
+export * from './isString'
 export * from './isUndefined'
 export * from './funExisting'
+export * from './judgeType'
 export * from './log'
 export * from './mixin'

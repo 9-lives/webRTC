@@ -35,7 +35,7 @@ export class P2P extends RtcCommon {
 
     this.peerConn = new RTCPeerConnection(this.config) // p2p 连接对象
     this.peerConn.onicecandidate = async evt => {
-      // 采集本地 ice candidate(兼容 chrome 56 及以上版本，以下版本通过 RTCIceCandidateEvent 实现)
+      // 采集本地 ice candidate
       if (evt.candidate) {
         // 本地 ice candidate 上传至服务器
         log.d('ice candidate已采集[本地]')
@@ -56,7 +56,7 @@ export class P2P extends RtcCommon {
 
     // 接收到远程流媒体(标准已移除)
     this.peerConn.onaddstream = async streamEvt => {
-      log.i('收到远程流媒体', streamEvt.stream)
+      log.i('收到远程流媒体：', streamEvt.stream)
 
       this.evtCallBack({
         evtName: 'pOnAddStream',
@@ -71,7 +71,7 @@ export class P2P extends RtcCommon {
     }
 
     /*
-     * 根据工作草案，应使用此事件感知 p2p 连接状态变化，遗憾的是，浏览器(chrome 59)未支持 connectionState 属性
+     * 根据工作草案，应使用此事件感知 p2p 连接状态变化，遗憾的是，浏览器(chrome 60)未支持 connectionState 属性
      */
     // this.peerConn.onconnectionstatechange = () => {}
 
@@ -90,11 +90,8 @@ export class P2P extends RtcCommon {
           })
           break
         case 'connected':
-          log.d('p2p ice 连接完成')
-
-          if (this.role === 'answerer') {
-            this.clearP2PConnTimer()
-          }
+          log.d('p2p ice 连接完成, 终止p2p连接超时计时')
+          this.clearP2PConnTimer()
 
           this.evtCallBack({
             evtName: 'pIceConnConnected',
@@ -134,7 +131,7 @@ export class P2P extends RtcCommon {
     }
 
     /**
-     * 根据工作草案，应使用此事件感知 ice agent 搜集状态变化，遗憾的是，浏览器(chrome 59)未支持该事件
+     * 根据工作草案，应使用此事件感知 ice agent 搜集状态变化，遗憾的是，浏览器(chrome 60)未支持该事件
      */
     // this.peerConn.onicegatheringstatechange = () => {}
 
@@ -215,6 +212,8 @@ export class P2P extends RtcCommon {
         codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
         errType: 'peerConnection'
       })
+    } else {
+      log.e('p2p 连接关闭失败[连接不存在]')
     }
   }
 

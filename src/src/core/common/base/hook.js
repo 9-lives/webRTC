@@ -1,7 +1,7 @@
 import { errHandler } from '../../../constants/index'
 import * as evtNames from '../../../constants/eventName'
 import * as errCode from '../../../constants/errorCode/index'
-import { funExisting, log } from '../../../utils/index'
+import { funExisting, isString, log } from '../../../utils/index'
 
 /**
  * 钩子函数类(mixin 混入类)
@@ -29,11 +29,11 @@ export const Hook = Base => class Hook extends Base {
           // 订阅事件名在事件表中存在
           this.hooks.set(n, f)
         } else {
-          log.e(`webRTC库订阅 ${n} 事件失败[事件名未找到]`)
+          log.e(`webRTC 库订阅 ${n} 事件失败[事件名未找到]`)
         }
       }
     } else {
-      log.e(`webRTC库订阅事件失败[参数错误]`)
+      log.e(`webRTC 库订阅事件失败[参数错误]`)
     }
   }
 
@@ -56,24 +56,35 @@ export const Hook = Base => class Hook extends Base {
     }
   }
 
+  /**
+   * 事件回调
+   * @param {string} evtName 事件名
+   * @param {array} args 参数列表
+   * @param {string} codeName 错误代码名
+   * @param {string} errType 错误类型 1. 'websocket' 2. peerConnection
+   */
   async evtCallBack ({evtName = '', args = [], codeName = '', errType = ''}) {
-    let f = this.hooks.get(evtNames[evtName])
+    if (isString(evtName, codeName, errType) && args instanceof Array) {
+      let f = this.hooks.get(evtNames[evtName])
 
-    if (funExisting(f)) {
-      try {
-        await f(...args)
-      } catch (err) {
-        if (err.message) {
-          log.e(err.message)
+      if (funExisting(f)) {
+        try {
+          await f(...args)
+        } catch (err) {
+          if (err.message) {
+            log.e(err.message)
+          }
+          log.e(`${errType} ${evtNames[evtName]} 回调异常`)
+
+          await this[errHandler]({
+            type: errType,
+            value: err,
+            code: errCode[codeName]
+          })
         }
-        log.e(`${errType} ${evtNames[evtName]} 回调异常`)
-
-        await this[errHandler]({
-          type: errType,
-          value: err,
-          code: errCode[codeName]
-        })
       }
+    } else {
+      throw new Error('webRTC 库事件回调方法执行失败[参数错误]')
     }
   }
 }

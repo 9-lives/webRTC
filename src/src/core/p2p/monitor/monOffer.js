@@ -74,6 +74,9 @@ export class MonOffer extends P2P {
           code: -2004
         })
       }
+
+      // 复位连接超时计时器
+      this.resetP2PConnTimer()
     }
   }
 
@@ -101,6 +104,11 @@ export class MonOffer extends P2P {
           err,
           code: -2006
         })
+      }
+
+      if (!isUndefined(this.p2pConnTimer)) {
+        // 复位连接超时计时器
+        this.resetP2PConnTimer()
       }
     }
   }
