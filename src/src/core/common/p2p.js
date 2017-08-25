@@ -18,6 +18,7 @@ export class P2P extends RtcCommon {
     super(options)
 
     this.config = config // p2p 连接参数
+    this._rtcP2PConnectionState = undefined // p2p 连接状态（chrome60、firefox55 PC端没有提供接口查询）。仅提供connected, disconnected
     this.peerConn = undefined // p2p连接
     this.p2pConnTimer = undefined // p2p 连通超时计时器
     this.role = undefined // 角色: offerer / answerer
@@ -38,49 +39,31 @@ export class P2P extends RtcCommon {
       if (evt.candidate) {
         // 本地 ice candidate 上传至服务器
         log.d('ice candidate已采集[本地]')
-        try {
-          let f = this.hooks.get(evtNames['pOnIceCandidate'])
-          if (funExisting(f)) {
-            await f(evt.candidate)
-          }
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
-          }
-          log.e(`p2p连接 ${evtNames['pOnIceCandidate']} 回调异常`)
-          await this[errHandler]({
-            type: 'peerConnection',
-            value: err,
-            code: errCode.P2P_HOOK_ICE_GATHERER
-          })
-        }
+
+        this.evtCallBack({
+          evtName: 'pOnIceCandidate',
+          args: [evt.candidate],
+          codeName: 'P2P_HOOK_ICE_GATHERER',
+          errType: 'peerConnection'
+        })
       }
     }
     // 准备 sdp 协商(offerer)
     this.peerConn.onnegotiationneeded = async evt => {
       log.d('发起 sdp 协商')
-      await this.createSdp({ type: 'offer' })
+      this.createSdp({ type: 'offer' })
     }
+
     // 接收到远程流媒体(标准已移除)
     this.peerConn.onaddstream = async streamEvt => {
       log.i('收到远程流媒体', streamEvt.stream)
 
-      try {
-        let f = this.hooks.get(evtNames['pOnAddStream'])
-        if (funExisting(f)) {
-          await f(streamEvt.stream)
-        }
-      } catch (err) {
-        if (err.message) {
-          log.e(err.message)
-        }
-        log.e(`p2p连接 ${evtNames['pOnAddStream']} 回调异常`)
-        await this[errHandler]({
-          type: 'peerConnection',
-          value: err,
-          code: errCode.P2P_HOOK_STREAM_RECEIVED
-        })
-      }
+      this.evtCallBack({
+        evtName: 'pOnAddStream',
+        args: [streamEvt.stream],
+        codeName: 'P2P_HOOK_STREAM_RECEIVED',
+        errType: 'peerConnection'
+      })
     }
     // p2p 流媒体已移除
     this.peerConn.onremovestream = () => {
@@ -99,22 +82,12 @@ export class P2P extends RtcCommon {
           // 搜集完毕不一定发现通路
           log.d('ice candidate 搜集完毕')
 
-          try {
-            let f = this.hooks.get(evtNames['pIceConnCompleted'])
-            if (funExisting(f)) {
-              await f(evt)
-            }
-          } catch (err) {
-            if (err.message) {
-              log.e(err.message)
-            }
-            log.e(`p2p连接 ${evtNames['pIceConnCompleted']} 回调异常`)
-            await this[errHandler]({
-              type: 'peerConnection',
-              err,
-              code: errCode.P2P_HOOK_ICE_CONN_COMPLETED
-            })
-          }
+          this.evtCallBack({
+            evtName: 'pIceConnCompleted',
+            args: [evt],
+            codeName: 'P2P_HOOK_ICE_CONN_COMPLETED',
+            errType: 'peerConnection'
+          })
           break
         case 'connected':
           log.d('p2p ice 连接完成')
@@ -123,22 +96,12 @@ export class P2P extends RtcCommon {
             this.clearP2PConnTimer()
           }
 
-          try {
-            let f = this.hooks.get(evtNames['pIceConnConnected'])
-            if (funExisting(f)) {
-              await f()
-            }
-          } catch (err) {
-            if (err.message) {
-              log.e(err.message)
-            }
-            log.e(`p2p连接 ${evtNames['pIceConnConnected']} 回调异常`)
-            await this[errHandler]({
-              type: 'peerConnection',
-              err,
-              code: errCode.P2P_HOOK_ICE_CONN_CONNECTED
-            })
-          }
+          this.evtCallBack({
+            evtName: 'pIceConnConnected',
+            args: [evt],
+            codeName: 'P2P_HOOK_ICE_CONN_CONNECTED',
+            errType: 'peerConnection'
+          })
           break
         /**
          * TODO 避开未实现的工作草案，查询连接状态，区分正常 / 异常的disconnected、failed，针对性报错
@@ -146,44 +109,24 @@ export class P2P extends RtcCommon {
          */
         case 'disconnected':
            // 可能的情况： 1. 远端主动断开连接，稍后本地 ice 连接状态将变为 failed  2. ice 通路故障，若故障修复连接状态将变为 connected,否则 failed
-          log.i('p2p ice 连接中断')
+          log.d('p2p ice 连接中断')
 
-          try {
-            let f = this.hooks.get(evtNames['pIceConnDisconnected'])
-            if (funExisting(f)) {
-              await f()
-            }
-          } catch (err) {
-            if (err.message) {
-              log.e(err.message)
-            }
-            log.e(`p2p连接 ${evtNames['pIceConnDisconnected']} 回调异常`)
-            await this[errHandler]({
-              type: 'peerConnection',
-              err,
-              code: errCode.P2P_HOOK_ICE_CONN_DISCONNECTED
-            })
-          }
+          this.evtCallBack({
+            evtName: 'pIceConnDisconnected',
+            args: [evt],
+            codeName: 'P2P_HOOK_ICE_CONN_DISCONNECTED',
+            errType: 'peerConnection'
+          })
           break
         case 'failed':
           log.e('p2p ice 连接异常关闭')
 
-          try {
-            let f = this.hooks.get(evtNames['pIceConnFailed'])
-            if (funExisting(f)) {
-              await f()
-            }
-          } catch (err) {
-            if (err.message) {
-              log.e(err.message)
-            }
-            log.e(`p2p连接 ${evtNames['pIceConnFailed']} 回调异常`)
-            await this[errHandler]({
-              type: 'peerConnection',
-              err,
-              code: errCode.P2P_HOOK_ICE_CONN_FAILED
-            })
-          }
+          this.evtCallBack({
+            evtName: 'pIceConnFailed',
+            args: [evt],
+            codeName: 'P2P_HOOK_ICE_CONN_FAILED',
+            errType: 'peerConnection'
+          })
           break
         default:
           break
@@ -246,35 +189,32 @@ export class P2P extends RtcCommon {
     }
 
     // 发送本地 sdp 到信令服务器
-    try {
-      let fun = this.hooks.get(evtNames['pLocalSDPReady'])
-      if (funExisting(fun)) {
-        await fun(this.peerConn.localDescription)
-      }
-    } catch (err) {
-      if (err.message) {
-        log.e(err.message)
-      }
-      log.e('p2p连接 LocalSDPReady 回调异常')
-      await this[errHandler]({
-        type: 'peerConnection',
-        value: err,
-        code: errCode.P2P_HOOK_SDP_LOCAL_READY
-      })
-    }
+    this.evtCallBack({
+      evtName: 'pLocalSDPReady',
+      args: [this.peerConn.localDescription],
+      codeName: 'P2P_HOOK_SDP_LOCAL_READY',
+      errType: 'peerConnection'
+    })
   }
 
   /**
    * 关闭连接
    */
-  close () {
+  async close () {
     if (this.peerConn instanceof RTCPeerConnection) {
       this.clearP2PConnTimer()
+
       if (this.peerConn.signalingState !== 'closed') {
         log.d('p2p 连接已关闭')
         this.peerConn.close()
       }
       super.close()
+
+      this.evtCallBack({
+        evtName: 'pClosed',
+        codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
+        errType: 'peerConnection'
+      })
     }
   }
 

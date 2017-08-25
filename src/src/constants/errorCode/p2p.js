@@ -21,4 +21,4 @@ export const P2P_HOOK_SDP_LOCAL_READY = -2103 // 本地 SDP 就绪回调执行�
 export const P2P_HOOK_ICE_CONN_CONNECTED = -2104 // ice连接成功回调执行失败
 export const P2P_HOOK_ICE_CONN_DISCONNECTED = -2105 // ice连接中断回调执行失败
 export const P2P_HOOK_ICE_CONN_FAILED = -2106 // ice连接异常关闭回调执行失败
-
+export const P2P_HOOK_CONN_CLOSED_FAILED = -2107 // 连接异常关闭回调执行失败

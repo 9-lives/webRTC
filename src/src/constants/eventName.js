@@ -23,3 +23,4 @@ export const pIceConnConnected = 'pIceConnConnected' // ice 连接成功
 export const pIceConnDisconnected = 'pIceConnDisconnected' // ice 连接中断
 export const pIceConnFailed = 'pIceConnFailed' // ice 连接失败
 export const pOnAddStream = 'pOnAddStream' // 接收到远程流媒体
+export const pClosed = 'pClosed' // 连接已正常关闭
