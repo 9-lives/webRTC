@@ -5,7 +5,7 @@
   */
 export function judgeType (type = '', ...args) {
   for (let arg of args) {
-    if (typeof str !== type) {
+    if (typeof arg !== type) {
       return false
     }
   }

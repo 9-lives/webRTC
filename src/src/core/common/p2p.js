@@ -3,7 +3,7 @@ import { RtcCommon } from './index'
 import { errHandler } from '../../constants/index'
 import * as errCode from '../../constants/errorCode/index'
 import * as evtNames from '../../constants/eventName'
-import { funExisting, isUndefined } from '../../utils'
+import { judgeType } from '../../utils'
 import { webRtcConfig } from '../../../config'
 
 /**
@@ -221,7 +221,7 @@ export class P2P extends RtcCommon {
    * 清除 p2p 连接超时计时器
    */
   clearP2PConnTimer () {
-    if (!isUndefined(this.p2pConnTimer)) {
+    if (!judgeType('undefined', this.p2pConnTimer)) {
       clearTimeout(this.p2pConnTimer)
       this.p2pConnTimer = undefined
     }

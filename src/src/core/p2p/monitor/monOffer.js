@@ -1,4 +1,4 @@
-import { isUndefined, log } from '../../../index'
+import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
 import { connect, createConstraints, errHandler, getDevId, getMedia } from '../../../constants/index'
 
@@ -84,7 +84,7 @@ export class MonOffer extends P2P {
    * websocket[信令通道] 收到 ice candidate
    */
   async _rtcP2PRcvIceCandidate (data) {
-    if (data.candidate && !isUndefined(data.sdpMLineIndex, data.sdpMid)) {
+    if (data.candidate && !judgeType('undefined', data.sdpMLineIndex, data.sdpMid)) {
       log.d('收到 ice candidate[来自远程], 添加到 p2p 连接')
       let rtcIceCandidate = new RTCIceCandidate({
         candidate: data.candidate,
@@ -106,7 +106,7 @@ export class MonOffer extends P2P {
         })
       }
 
-      if (!isUndefined(this.p2pConnTimer)) {
+      if (!judgeType('undefined', this.p2pConnTimer)) {
         // 复位连接超时计时器
         this.resetP2PConnTimer()
       }

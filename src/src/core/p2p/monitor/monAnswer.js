@@ -1,4 +1,4 @@
-import { isUndefined, log } from '../../../index'
+import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/p2p'
 import { connect, errHandler } from '../../../constants/index'
 import * as errCode from '../../../constants/errorCode/index'
@@ -35,14 +35,14 @@ export class MonAnswer extends P2P {
    * 添加远程 ice candidate
    */
   async [addIceCandidate] () {
-    if (!isUndefined(this.p2pConnTimer)) {
+    if (!judgeType('undefined', this.p2pConnTimer)) {
       // 复位连接超时计时器
       this.resetP2PConnTimer()
     }
 
     let candidate = this.iceBuff.pop()
 
-    while (!isUndefined(candidate)) {
+    while (!judgeType('undefined', candidate)) {
       log.d('ice candidate[来自远程] 添加到 p2p 连接')
       try {
         await this.peerConn.addIceCandidate(candidate)
@@ -106,7 +106,7 @@ export class MonAnswer extends P2P {
    * websocket[信令通道] 收到 ice candidate
    */
   async _rtcP2PRcvIceCandidate (data) {
-    if (data.candidate && !isUndefined(data.sdpMLineIndex, data.sdpMid)) {
+    if (data.candidate && !judgeType('undefined', data.sdpMLineIndex, data.sdpMid)) {
       log.d('收到并缓存 ice candidate[来自远程]')
       let rtcIceCandidate = new RTCIceCandidate({
         candidate: data.candidate,

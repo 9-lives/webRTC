@@ -1,5 +1,5 @@
 import { RtcCommon } from './index'
-import { isUndefined, log } from '../../index'
+import { judgeType, log } from '../../index'
 import { recStart, recStop } from '../../constants/methods'
 
   /**
@@ -40,7 +40,7 @@ export class Recorder extends RtcCommon {
     }
 
     let opt = {}
-    if (!isUndefined(type)) {
+    if (!judgeType('undefined', type)) {
       switch (type) {
         case 'rec':
           Object.assign(opt, audioBitsPerSecond)

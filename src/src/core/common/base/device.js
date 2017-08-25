@@ -1,5 +1,5 @@
 import { log } from '../../../utils'
-import { isUndefined } from '../../../index'
+import { judgeType } from '../../../index'
 import { getDevId } from '../../../constants/methods'
 
 export const getVDevId = Symbol('getVDevId')
@@ -66,8 +66,7 @@ export class Device {
     } = options
 
     let vDevId // 视频设备ID
-
-    if (!isUndefined(vid, pid)) {
+    if (!judgeType('undefined', vid, pid)) {
       // vid、pid 对已指定
       log.i(`指定摄像头 vid = ${vid}, pid = ${pid}`)
       for (let dev of Object.values(devIds.video)) {
@@ -76,9 +75,9 @@ export class Device {
           break
         }
       }
-      if (isUndefined(vDevId)) {
+      if (judgeType('undefined', vDevId)) {
         // vid、pid对应设备未找到
-        if (!isUndefined(camera)) {
+        if (!judgeType('undefined', camera)) {
           log.d('取视频设备ID失败[vid、pid 对应设备未找到]，尝试使用设备序号查找')
           // 已指定摄像头序号
           vDevId = getVDevIdByNo({
@@ -88,7 +87,7 @@ export class Device {
           })
         } else {
           // 未指定摄像头序号
-          if (isUndefined(facingMode)) {
+          if (judgeType('undefined', facingMode)) {
             // 未指定视频源方向
             log.e('取视频设备ID失败[vid、pid 对应设备未找到]')
           } else {
@@ -99,7 +98,7 @@ export class Device {
       }
     } else {
       // 未指定 vid、pid 对
-      if (!isUndefined(camera)) {
+      if (!judgeType('undefined', camera)) {
         // 已指定摄像头序号
         vDevId = getVDevIdByNo({
           camera,
@@ -108,7 +107,7 @@ export class Device {
         })
       } else {
         // 未指定摄像头序号
-        if (!isUndefined(vLabel)) {
+        if (!judgeType('undefined', vLabel)) {
           // 指定摄像头标签
           vDevId = getVDevIdByLabel({
             vLabel,
@@ -116,9 +115,9 @@ export class Device {
           })
         } else {
           // 未指定摄像头标签
-          if (isUndefined(facingMode)) {
+          if (judgeType('undefined', facingMode)) {
             // 未指定视频源方向
-            log.e('取视频设备ID失败[序号对应设备未找到]')
+            log.e('取视频设备ID失败[参数错误]')
           } else {
             // 已指定视频源方向
             log.d('使用视频源方向指定设备')
@@ -142,7 +141,7 @@ export class Device {
 
     let aDevId
 
-    if (!isUndefined(mLabel)) {
+    if (!judgeType('undefined', mLabel)) {
       // 已指定麦克风标签
       log.d(`指定音频设备 label = ${mLabel}`)
       for (let dev of Object.values(devIds.audio)) {
@@ -151,9 +150,9 @@ export class Device {
           break
         }
       }
-      if (isUndefined(aDevId)) {
+      if (judgeType('undefined', aDevId)) {
         // 麦克风标签对应设备未找到
-        if (!isUndefined(mic)) {
+        if (!judgeType('undefined', mic)) {
           // 已指定麦克风序号
           log.d('取音频设备ID失败[标签对应设备未找到]，尝试使用设备序号查找')
           aDevId = getADevIdByNo({
@@ -167,7 +166,7 @@ export class Device {
       }
     } else {
       // 未指定麦克风标签
-      if (!isUndefined(mic)) {
+      if (!judgeType('undefined', mic)) {
         // 已指定麦克风序号
         aDevId = getADevIdByNo({
           mic,
@@ -261,7 +260,7 @@ function getVDevIdByNo (options = {}) {
     return devIds.video[camera].deviceId
   }
 
-  if (isUndefined(facingMode)) {
+  if (judgeType('undefined', facingMode)) {
     log.e('取视频设备ID失败[序号对应设备未找到]')
   } else {
     log.d('取视频设备ID失败[序号对应设备未找到]，尝试使用视频源方向指定设备')

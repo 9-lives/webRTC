@@ -1,4 +1,4 @@
-import { isUndefined, log } from '../../../index'
+import { judgeType, log } from '../../../index'
 import { Connect, Hook, HtmlEle, Media } from './index'
 
 /**
@@ -14,7 +14,7 @@ export class RtcCommon extends Connect(Hook(HtmlEle(Media))) {
    * 关闭
    */
   close () {
-    if (!isUndefined(this.mediaStream)) {
+    if (!judgeType('undefined', this.mediaStream)) {
       // 关闭媒体轨
       let tracks = this.mediaStream.getTracks()
       if (tracks && tracks instanceof Array) {
@@ -23,7 +23,7 @@ export class RtcCommon extends Connect(Hook(HtmlEle(Media))) {
         }
       }
 
-      if (this.video && !isUndefined(this.video.srcObject)) {
+      if (this.video && !judgeType('undefined', this.video.srcObject)) {
         // 是否需要手动释放?
         this.video.srcObject = undefined
       }

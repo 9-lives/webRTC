@@ -1,4 +1,4 @@
-import { isUndefined, log } from '../../utils/index'
+import { judgeType, log } from '../../utils/index'
 import { RtcCommon } from '../common/base/index'
 import { createConstraints, getVideoById, getCanvasById, getDevId, getMedia } from '../../constants/index'
 
@@ -29,12 +29,12 @@ export class TakePicture extends RtcCommon {
       return false
     }
 
-    if (!isUndefined(videoId)) {
+    if (!judgeType('undefined', videoId)) {
       this.video = super[getVideoById](videoId)
       if (this.video === false) return false
     }
 
-    if (!isUndefined(canvasId)) {
+    if (!judgeType('undefined', canvasId)) {
       this.canvas = super[getCanvasById](canvasId)
       if (this.canvas === false) return false
     }
@@ -49,7 +49,7 @@ export class TakePicture extends RtcCommon {
     this.mediaStream = await super[getMedia](constraints)
 
     // video 标签绑定流媒体
-    if (!isUndefined(videoId)) {
+    if (!judgeType('undefined', videoId)) {
       this.video.srcObject = this.mediaStream
     }
 

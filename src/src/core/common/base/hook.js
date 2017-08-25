@@ -1,7 +1,7 @@
 import { errHandler } from '../../../constants/index'
 import * as evtNames from '../../../constants/eventName'
 import * as errCode from '../../../constants/errorCode/index'
-import { funExisting, isString, log } from '../../../utils/index'
+import { judgeType, log } from '../../../utils/index'
 
 /**
  * 钩子函数类(mixin 混入类)
@@ -64,10 +64,10 @@ export const Hook = Base => class Hook extends Base {
    * @param {string} errType 错误类型 1. 'websocket' 2. peerConnection
    */
   async evtCallBack ({evtName = '', args = [], codeName = '', errType = ''}) {
-    if (isString(evtName, codeName, errType) && args instanceof Array) {
+    if (judgeType('string', evtName, codeName, errType) && args instanceof Array) {
       let f = this.hooks.get(evtNames[evtName])
 
-      if (funExisting(f)) {
+      if (judgeType('function', f)) {
         try {
           await f(...args)
         } catch (err) {

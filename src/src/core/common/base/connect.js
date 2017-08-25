@@ -1,7 +1,7 @@
 import { errHandler, connect } from '../../../constants/index'
 import * as errCode from '../../../constants/errorCode/index'
 import * as evtNames from '../../../constants/eventName'
-import { funExisting, log } from '../../../index'
+import { judgeType, log } from '../../../index'
 
 /**
  * 连接类(mixin 混入类)
@@ -90,7 +90,7 @@ export const Connect = Base => class Connect extends Base {
       code
     } = options
     let f = this.hooks.get(evtNames['errHandler'])
-    if (funExisting(f)) {
+    if (judgeType('function', f)) {
       await f({
         type,
         value: err,

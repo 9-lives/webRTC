@@ -1,4 +1,4 @@
-import { isUndefined } from '../../utils/index'
+import { judgeType } from '../../utils/index'
 import { Recorder } from '../common/index'
 import { createConstraints, getVideoById, getDevId, getMedia, connect } from '../../constants/index'
 
@@ -22,7 +22,7 @@ export class Rec extends Recorder {
     // 建立 websocket 连接
     await super[connect]()
 
-    if (!isUndefined(videoId)) {
+    if (!judgeType('undefined', videoId)) {
       this.video = super[getVideoById](videoId)
       if (this.video === false) return false
     }
@@ -37,7 +37,7 @@ export class Rec extends Recorder {
     this.mediaStream = await super[getMedia](constraints)
 
     // video 标签绑定流媒体
-    if (!isUndefined(this.video)) {
+    if (!judgeType('undefined', this.video)) {
       this.video.srcObject = this.mediaStream
     }
 

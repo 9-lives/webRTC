@@ -1,4 +1,4 @@
-import { isUndefined, log } from '../../../index'
+import { judgeType, log } from '../../../index'
 import { createConstraints, getMedia } from '../../../constants/methods'
 import { Device, getVDevId, getADevId } from './index'
 
@@ -44,7 +44,7 @@ const MediaBase = Base => class MediaBase extends Base {
     let aDevId // 麦克风设备ID
     let vDevId // 摄像头设备ID
 
-    if (isUndefined(vGroupId)) {
+    if (judgeType('undefined', vGroupId)) {
       // 未指定视频设备组ID
       vDevId = super[getVDevId]({
         camera,
@@ -58,7 +58,7 @@ const MediaBase = Base => class MediaBase extends Base {
       // 已指定视频设备组ID
     }
 
-    if (isUndefined(aGroupId)) {
+    if (judgeType('undefined', aGroupId)) {
       // 未指定音频设备组ID
       aDevId = super[getADevId]({
         mic,
@@ -69,7 +69,7 @@ const MediaBase = Base => class MediaBase extends Base {
       // 已指定音频设备组ID
     }
 
-    if (!isUndefined(aDevId)) {
+    if (!judgeType('undefined', aDevId)) {
       // 找到音频设备ID
       audio = {
         deviceId: aDevId,
@@ -79,7 +79,7 @@ const MediaBase = Base => class MediaBase extends Base {
         sampleSize,
         volumn
       }
-    } else if (!isUndefined(aGroupId)) {
+    } else if (!judgeType('undefined', aGroupId)) {
       log.d(`指定音频设备组ID aGroupId = ${aGroupId}`)
       audio = {
         groupId: aGroupId,
@@ -94,7 +94,7 @@ const MediaBase = Base => class MediaBase extends Base {
       audio = false
     }
 
-    if (!isUndefined(vDevId) || !isUndefined(facingMode)) {
+    if (!judgeType('undefined', vDevId) || !judgeType('undefined', facingMode)) {
       // 指定视频设备ID或已指定 facingMode
 
       // 构造部分 videoTrackConstraints
@@ -104,15 +104,15 @@ const MediaBase = Base => class MediaBase extends Base {
         height: { ideal: height }
       }
 
-      if (!isUndefined(vDevId)) {
+      if (!judgeType('undefined', vDevId)) {
         // 指定视频设备ID
         Object.assign(video, { deviceId: vDevId })
-      } else if (!isUndefined(facingMode)) {
+      } else if (!judgeType('undefined', facingMode)) {
         // 已指明视频轨朝向
         log.d(`指定视频轨朝向 facingMode = ${facingMode}`)
         Object.assign(video, { facingMode })
       }
-    } else if (!isUndefined(vGroupId)) {
+    } else if (!judgeType('undefined', vGroupId)) {
       // 指定视频设备组ID
       log.d(`指定视频设备组ID vGroupId = ${vGroupId}`)
       video = {
@@ -171,7 +171,7 @@ const MediaBase = Base => class MediaBase extends Base {
    */
   isActive () {
     if (this.mediaStream && this.mediaStream instanceof MediaStream) {
-      if (!isUndefined(this.mediaStream.active)) {
+      if (!judgeType('undefined', this.mediaStream.active)) {
         if (this.mediaStream.active) {
           return true
         } else {
