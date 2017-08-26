@@ -1,10 +1,12 @@
 import { log } from '../../index'
 import { RtcCommon } from './index'
-import { errHandler } from '../../constants/index'
+import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../constants/methods/index'
 import * as errCode from '../../constants/errorCode/index'
 import * as evtNames from '../../constants/eventName'
 import { judgeType } from '../../utils'
 import { webRtcConfig } from '../../../config'
+
+const clearP2PConnTimer = Symbol('clearP2PConnTimer') // 复位 p2p 连接超时计时器
 
 /**
  * webRTC peerConnection 基础类
@@ -16,18 +18,16 @@ export class P2P extends RtcCommon {
       config = {}
     } = options
     super(options)
-
     this.config = config // p2p 连接参数
     this._rtcP2PConnectionState = undefined // p2p 连接状态（chrome60、firefox55 PC端没有提供接口查询）。仅提供connected, disconnected
     this.peerConn = undefined // p2p连接
     this.p2pConnTimer = undefined // p2p 连通超时计时器
-    this.role = undefined // 角色: offerer / answerer
   }
 
   /**
    * PeerConnection 对象初始化
    */
-  pConnInit () {
+  [pConnInit] () {
     if (!window.RTCPeerConnection) {
       log.e('RTCPeerConnection API 不存在，请更换浏览器')
       throw new Error('peerConnection 对象初始化失败')
@@ -51,7 +51,7 @@ export class P2P extends RtcCommon {
     // 准备 sdp 协商(offerer)
     this.peerConn.onnegotiationneeded = async evt => {
       log.d('发起 sdp 协商')
-      this.createSdp({ type: 'offer' })
+      this[createSDP]({ type: 'offer' })
     }
 
     // 接收到远程流媒体(标准已移除)
@@ -90,8 +90,8 @@ export class P2P extends RtcCommon {
           })
           break
         case 'connected':
-          log.d('p2p ice 连接完成, 终止p2p连接超时计时')
-          this.clearP2PConnTimer()
+          log.d('p2p ice 连接成功, 清除超时计时器')
+          this[clearP2PConnTimer]()
 
           this.evtCallBack({
             evtName: 'pIceConnConnected',
@@ -135,17 +135,19 @@ export class P2P extends RtcCommon {
      */
     // this.peerConn.onicegatheringstatechange = () => {}
 
-    // 信令状态改变
-    // this.peerConn.onsignalingstatechange = () => {
-    //   // TODO 优化ice 添加速度, 在此添加ice
+    /**
+     * 信令状态改变
+     * 该事件监听在chrome 60 似乎存在BUG，本地测试一定几率观察到浏览器遗漏状态变更，结果是发出两次状态变更到stable事件。
+     */
+    // this.peerConn.onsignalingstatechange = (evt) => {
+    //   // 由于可能的chrome bug，放弃在此进行检查或优化
     // }
-    return true
   }
 
   /**
    * 创建并设置本地 SDP 信令
    */
-  async createSdp ({ type } = { type: '' }) {
+  async [createSDP] ({ type } = { type: '' }) {
     let sdp
     try {
       switch (type) {
@@ -178,6 +180,7 @@ export class P2P extends RtcCommon {
         log.e(err.message)
       }
       log.e('本地 sdp 设置失败')
+
       await this[errHandler]({
         type: 'peerConnection',
         value: err,
@@ -199,7 +202,7 @@ export class P2P extends RtcCommon {
    */
   async close () {
     if (this.peerConn instanceof RTCPeerConnection) {
-      this.clearP2PConnTimer()
+      this[clearP2PConnTimer]()
 
       if (this.peerConn.signalingState !== 'closed') {
         log.d('p2p 连接已关闭')
@@ -220,7 +223,7 @@ export class P2P extends RtcCommon {
   /**
    * 清除 p2p 连接超时计时器
    */
-  clearP2PConnTimer () {
+  [clearP2PConnTimer] () {
     if (!judgeType('undefined', this.p2pConnTimer)) {
       clearTimeout(this.p2pConnTimer)
       this.p2pConnTimer = undefined
@@ -230,9 +233,8 @@ export class P2P extends RtcCommon {
   /**
    * 复位 p2p 连接超时计时器
    */
-  resetP2PConnTimer () {
-    this.clearP2PConnTimer()
-
+  [resetP2PConnTimer] () {
+    this[clearP2PConnTimer]()
     this.p2pConnTimer = setTimeout(() => {
       this[errHandler]({
         type: 'peerConnection',

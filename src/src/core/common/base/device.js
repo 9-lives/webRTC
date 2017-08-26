@@ -1,6 +1,6 @@
 import { log } from '../../../utils'
 import { judgeType } from '../../../index'
-import { getDevId } from '../../../constants/methods'
+import { getDevId } from '../../../constants/methods/index'
 
 export const getVDevId = Symbol('getVDevId')
 export const getADevId = Symbol('getADevId')

@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../utils/index'
 import { RtcCommon } from '../common/base/index'
-import { createConstraints, getVideoById, getCanvasById, getDevId, getMedia } from '../../constants/index'
+import { createConstraints, getVideoById, getCanvasById, getDevId, getMedia, isActive } from '../../constants/methods/index'
 
 /**
  * webRTC 拍照
@@ -60,7 +60,7 @@ export class TakePicture extends RtcCommon {
    * 拍照
    */
   takePicture (options = {}) {
-    if (this.isActive()) {
+    if (this[isActive]()) {
       let {
         w = 400,
         h = 300

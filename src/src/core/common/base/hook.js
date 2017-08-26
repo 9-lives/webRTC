@@ -1,4 +1,4 @@
-import { errHandler } from '../../../constants/index'
+import { errHandler } from '../../../constants/methods/index'
 import * as evtNames from '../../../constants/eventName'
 import * as errCode from '../../../constants/errorCode/index'
 import { judgeType, log } from '../../../utils/index'

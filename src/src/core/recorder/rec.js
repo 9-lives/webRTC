@@ -1,6 +1,6 @@
 import { judgeType } from '../../utils/index'
 import { Recorder } from '../common/index'
-import { createConstraints, getVideoById, getDevId, getMedia, connect } from '../../constants/index'
+import { createConstraints, getVideoById, getDevId, getMedia, connect } from '../../constants/methods/index'
 
 /**
  * webRTC 录像(音频改进)

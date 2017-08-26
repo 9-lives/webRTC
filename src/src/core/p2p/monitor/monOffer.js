@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
-import { connect, createConstraints, errHandler, getDevId, getMedia } from '../../../constants/index'
+import { connect, createConstraints, errHandler, getDevId, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 
 export const wsReconnect = Symbol('wsReconnect')
 
@@ -11,8 +11,6 @@ export const wsReconnect = Symbol('wsReconnect')
 export class MonOffer extends P2P {
   constructor (options = {}) {
     super(options)
-
-    this.role = 'offerer' // 角色： offerer
   }
 
   /**
@@ -20,7 +18,7 @@ export class MonOffer extends P2P {
    */
   async start (options = {}) {
     // PeerConnection 对象初始化
-    await super.pConnInit()
+    await super[pConnInit]()
 
     // 建立 websocket 连接
     await super[connect]()
@@ -69,6 +67,7 @@ export class MonOffer extends P2P {
           log.e(err.message)
         }
         log.e('远程 answer 设置失败')
+
         this[errHandler]({
           type: 'peerConnection',
           code: -2004
@@ -76,7 +75,7 @@ export class MonOffer extends P2P {
       }
 
       // 复位连接超时计时器
-      this.resetP2PConnTimer()
+      super[resetP2PConnTimer]()
     }
   }
 
@@ -99,6 +98,7 @@ export class MonOffer extends P2P {
           log.e(err.message)
         }
         log.e('ice candidate 添加失败')
+
         await this[errHandler]({
           type: 'peerConnection',
           err,
@@ -108,7 +108,7 @@ export class MonOffer extends P2P {
 
       if (!judgeType('undefined', this.p2pConnTimer)) {
         // 复位连接超时计时器
-        this.resetP2PConnTimer()
+        super[resetP2PConnTimer]()
       }
     }
   }

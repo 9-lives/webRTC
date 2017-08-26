@@ -1,5 +1,5 @@
 import { log } from '../../../index'
-import { getVideoById, getCanvasById } from '../../../constants/methods'
+import { getVideoById, getCanvasById } from '../../../constants/methods/index'
 
 /**
  * DOM元素操作类(mixin 混入类)

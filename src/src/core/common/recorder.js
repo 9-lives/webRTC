@@ -1,6 +1,6 @@
 import { RtcCommon } from './index'
 import { judgeType, log } from '../../index'
-import { recStart, recStop } from '../../constants/methods'
+import { isActive, recStart, recStop } from '../../constants/methods/index'
 
   /**
    * webRTC recorder 基础类
@@ -72,7 +72,7 @@ export class Recorder extends RtcCommon {
    */
   rec (options = {}) {
     return new Promise((resolve, reject) => {
-      if (super.isActive()) {
+      if (super[isActive]()) {
         let blobArr = [] // 用于测试
         this.recorder.ondataavailable = ret => {
           blobArr.push(ret.data)

@@ -1,5 +1,5 @@
 import { judgeType, log } from '../../../index'
-import { createConstraints, getMedia } from '../../../constants/methods'
+import { createConstraints, getMedia, isActive } from '../../../constants/methods/index'
 import { Device, getVDevId, getADevId } from './index'
 
 /**
@@ -169,7 +169,7 @@ const MediaBase = Base => class MediaBase extends Base {
    * 检测流状态
    * 激活状态返回true，终止状态返回false
    */
-  isActive () {
+  [isActive] () {
     if (this.mediaStream && this.mediaStream instanceof MediaStream) {
       if (!judgeType('undefined', this.mediaStream.active)) {
         if (this.mediaStream.active) {

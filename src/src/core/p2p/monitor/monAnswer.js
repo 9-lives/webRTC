@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/p2p'
-import { connect, errHandler } from '../../../constants/index'
+import { connect, createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 import * as errCode from '../../../constants/errorCode/index'
 
 const addIceCandidate = Symbol('addIceCandidate')
@@ -15,7 +15,6 @@ export class MonAnswer extends P2P {
 
     this.addIceReady = false // (临时方案),offer[远程] 设置完成，可以添加ice候选
     this.iceBuff = [] // ice candidate[来自远程] 缓冲数组
-    this.role = 'answerer' // 角色: answerer
   }
 
   /**
@@ -23,7 +22,7 @@ export class MonAnswer extends P2P {
    */
   async start (options = {}) {
     // PeerConnection 对象初始化
-    await super.pConnInit()
+    await super[pConnInit]()
 
     // 建立 websocket 连接
     await super[connect]()
@@ -37,7 +36,7 @@ export class MonAnswer extends P2P {
   async [addIceCandidate] () {
     if (!judgeType('undefined', this.p2pConnTimer)) {
       // 复位连接超时计时器
-      this.resetP2PConnTimer()
+      super[resetP2PConnTimer]()
     }
 
     let candidate = this.iceBuff.pop()
@@ -91,14 +90,14 @@ export class MonAnswer extends P2P {
       }
 
       // 启动连接超时计时器
-      this.resetP2PConnTimer()
+      super[resetP2PConnTimer]()
 
       // 临时方案
       this.addIceReady = true
       await this[addIceCandidate]()
 
       // 构造 answer
-      await this.createSdp({ type: 'answer' })
+      await this[createSDP]({ type: 'answer' })
     }
   }
 

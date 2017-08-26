@@ -1,4 +1,4 @@
-import { getMedia, connect } from '../../constants/methods'
+import { getMedia, connect } from '../../constants/methods/index'
 import { Recorder } from '../common/index'
 
 const createConstraints = Symbol('createConstraints')
