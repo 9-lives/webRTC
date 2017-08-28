@@ -141,9 +141,13 @@
       },
       async start () {
         let ret = await this.conn.start({
-          camera: 0,
-          // vLabel: 'Intel(R) RealSense(TM) 3D Camera (R200) RGB (8086:0a80)',
-          mic: 2,
+          // camera: 0,
+          facingMode: 'user',
+          // pid: 'b5a7',
+          // vid: '04f2',
+          // vLabel: 'Chicony USB 2.0 Camera (04f2:b5a7)',
+          // mic: 2,
+          mLabel: '麦克风 (Realtek High Definition Audio)',
           frameRate: 10,
           width: 480,
           height: 360

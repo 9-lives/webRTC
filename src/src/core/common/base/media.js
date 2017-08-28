@@ -69,7 +69,7 @@ const MediaBase = Base => class MediaBase extends Base {
       // 已指定音频设备组ID
     }
 
-    if (!judgeType('undefined', aDevId)) {
+    if (judgeType('string', aDevId)) {
       // 找到音频设备ID
       audio = {
         deviceId: aDevId,
@@ -79,7 +79,7 @@ const MediaBase = Base => class MediaBase extends Base {
         sampleSize,
         volumn
       }
-    } else if (!judgeType('undefined', aGroupId)) {
+    } else if (judgeType('string', aGroupId)) {
       log.d(`指定音频设备组ID aGroupId = ${aGroupId}`)
       audio = {
         groupId: aGroupId,
@@ -109,7 +109,7 @@ const MediaBase = Base => class MediaBase extends Base {
         Object.assign(video, { deviceId: vDevId })
       } else if (!judgeType('undefined', facingMode)) {
         // 已指明视频轨朝向
-        log.d(`指定视频轨朝向 facingMode = ${facingMode}`)
+        log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
         Object.assign(video, { facingMode })
       }
     } else if (!judgeType('undefined', vGroupId)) {
@@ -128,8 +128,8 @@ const MediaBase = Base => class MediaBase extends Base {
     }
 
     return {
-      audio: audio,
-      video: video
+      audio,
+      video
     }
   }
 
