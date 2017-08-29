@@ -91,8 +91,12 @@ export class Device {
       }
     }
 
-    if (!judgeType('string', facingMode)) {
-      // 未指定视频源方向
+    if (judgeType('string', facingMode)) {
+      // 已指定视频轨朝向
+      return undefined
+    }
+
+    if (!judgeType('undefined', pid, vid, camera, vLabel, facingMode)) {
       log.e('取视频设备ID失败')
     }
 
@@ -137,7 +141,9 @@ export class Device {
       }
     }
 
-    log.e('取音频设备ID失败')
+    if (!judgeType('undefined', mic, mLabel)) {
+      log.e('取音频设备ID失败')
+    }
 
     return undefined
   }

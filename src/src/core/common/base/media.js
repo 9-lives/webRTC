@@ -18,7 +18,6 @@ const MediaBase = Base => class MediaBase extends Base {
   [createConstraints] (options = {}, devIds) {
     let {
       // MediaTrackConstraints - Audio
-      aGroupId, // 音频设备组ID
       channelCount = 2, // 声道
       echoCancellation = true, // 消除回声
       mic, // 麦克风序号
@@ -33,7 +32,6 @@ const MediaBase = Base => class MediaBase extends Base {
       height = 480, // 理想视频高度
       maxFrameRate = 28, // 最大帧率
       pid, // 摄像头pid
-      vGroupId, // 视频设备组ID
       vid, // 摄像头vid
       vLabel, // 摄像头标签
       width = 640 // 理想视频宽度
@@ -44,47 +42,27 @@ const MediaBase = Base => class MediaBase extends Base {
     let aDevId // 麦克风设备ID
     let vDevId // 摄像头设备ID
 
-    if (!vGroupId) {
-      // 未指定视频设备组ID
-      vDevId = super[getVDevId]({
-        camera,
-        vLabel,
-        facingMode,
-        vid,
-        pid,
-        devIds
-      })
-    } else {
-      // 已指定视频设备组ID
-    }
+    vDevId = super[getVDevId]({
+      camera,
+      facingMode,
+      devIds,
+      pid,
+      vid,
+      vLabel
+    })
 
-    if (!aGroupId) {
-      // 未指定音频设备组ID
-      aDevId = super[getADevId]({
-        mic,
-        mLabel,
-        devIds
-      })
-    } else {
-      // 已指定音频设备组ID
-    }
+    aDevId = super[getADevId]({
+      devIds,
+      mic,
+      mLabel
+    })
 
     if (judgeType('string', aDevId)) {
       // 找到音频设备ID
       audio = {
+        channelCount,
         deviceId: aDevId,
         echoCancellation,
-        channelCount,
-        sampleRate,
-        sampleSize,
-        volumn
-      }
-    } else if (judgeType('string', aGroupId)) {
-      log.d(`指定音频设备组ID aGroupId = ${aGroupId}`)
-      audio = {
-        groupId: aGroupId,
-        echoCancellation,
-        channelCount,
         sampleRate,
         sampleSize,
         volumn
@@ -99,8 +77,8 @@ const MediaBase = Base => class MediaBase extends Base {
       // 构造部分 videoTrackConstraints
       video = {
         frameRate: { ideal: frameRate, max: maxFrameRate },
-        width: { ideal: width },
-        height: { ideal: height }
+        height: { ideal: height },
+        width: { ideal: width }
       }
 
       if (judgeType('string', vDevId)) {
@@ -110,15 +88,6 @@ const MediaBase = Base => class MediaBase extends Base {
         // 已指明视频轨朝向
         log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
         Object.assign(video, { facingMode })
-      }
-    } else if (judgeType('string', vGroupId)) {
-      // 指定视频设备组ID
-      log.i(`指定视频设备组ID vGroupId = ${vGroupId}`)
-      video = {
-        groupId: vGroupId,
-        frameRate: { ideal: frameRate, max: maxFrameRate },
-        width: { ideal: width },
-        height: { ideal: height }
       }
     } else {
       // 禁用视频轨
@@ -165,7 +134,7 @@ const MediaBase = Base => class MediaBase extends Base {
 
   /**
    * 检测流状态
-   * @return {boolean} 激活状态true，终止状态false
+   * @return {boolean} 激活状态 true，终止状态 false
    */
   [isActive] () {
     if (this.mediaStream && this.mediaStream instanceof MediaStream) {
