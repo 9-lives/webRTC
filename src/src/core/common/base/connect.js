@@ -22,6 +22,7 @@ export const Connect = Base => class Connect extends Base {
   [connect] () {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.wsIp)
+
       this.ws.onopen = async evt => {
         if (this.ws.readyState !== 1) {
           this.ws.close()
@@ -45,6 +46,7 @@ export const Connect = Base => class Connect extends Base {
           resolve()
         }
       }
+
       this.ws.onmessage = async evt => {
         this.evtCallBack({
           evtName: 'wsMsgHandler',
@@ -53,6 +55,7 @@ export const Connect = Base => class Connect extends Base {
           errType: 'websocket'
         })
       }
+
       this.ws.onerror = async msg => {
         log.d('websocket[webRTC] 发生错误: ', msg)
         await this[errHandler]({
@@ -62,6 +65,7 @@ export const Connect = Base => class Connect extends Base {
         })
         reject(new Error('websocket[webRTC] 连接发生错误'))
       }
+
       this.ws.onclose = async evt => {
         if (evt && evt.code === 1000) {
           log.d('websocket[webRTC] 正常关闭')

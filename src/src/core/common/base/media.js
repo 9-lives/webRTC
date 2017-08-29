@@ -18,9 +18,9 @@ const MediaBase = Base => class MediaBase extends Base {
   [createConstraints] (options = {}, devIds) {
     let {
       // MediaTrackConstraints - Audio
+      aGroupId, // 音频设备组ID
       channelCount = 2, // 声道
       echoCancellation = true, // 消除回声
-      aGroupId, // 音频设备组ID
       mic, // 麦克风序号
       mLabel, // 麦克风标签
       sampleRate = 44100, // 采样率
@@ -28,7 +28,6 @@ const MediaBase = Base => class MediaBase extends Base {
       volumn = 1.0, // 音量
       // MediaTrackConstraints - video
       camera, // 摄像头序号
-      vLabel, // 摄像头标签
       facingMode, // 视频源方向
       frameRate = 24, // 理想帧率
       height = 480, // 理想视频高度
@@ -36,6 +35,7 @@ const MediaBase = Base => class MediaBase extends Base {
       pid, // 摄像头pid
       vGroupId, // 视频设备组ID
       vid, // 摄像头vid
+      vLabel, // 摄像头标签
       width = 640 // 理想视频宽度
     } = options
 
@@ -44,7 +44,7 @@ const MediaBase = Base => class MediaBase extends Base {
     let aDevId // 麦克风设备ID
     let vDevId // 摄像头设备ID
 
-    if (judgeType('undefined', vGroupId)) {
+    if (!vGroupId) {
       // 未指定视频设备组ID
       vDevId = super[getVDevId]({
         camera,
@@ -58,7 +58,7 @@ const MediaBase = Base => class MediaBase extends Base {
       // 已指定视频设备组ID
     }
 
-    if (judgeType('undefined', aGroupId)) {
+    if (!aGroupId) {
       // 未指定音频设备组ID
       aDevId = super[getADevId]({
         mic,
@@ -94,9 +94,8 @@ const MediaBase = Base => class MediaBase extends Base {
       audio = false
     }
 
-    if (!judgeType('undefined', vDevId) || !judgeType('undefined', facingMode)) {
-      // 指定视频设备ID或已指定 facingMode
-
+    if (judgeType('string', vDevId) || judgeType('string', facingMode)) {
+      // 找到视频设备ID或已指定 facingMode
       // 构造部分 videoTrackConstraints
       video = {
         frameRate: { ideal: frameRate, max: maxFrameRate },
@@ -104,17 +103,17 @@ const MediaBase = Base => class MediaBase extends Base {
         height: { ideal: height }
       }
 
-      if (!judgeType('undefined', vDevId)) {
-        // 指定视频设备ID
+      if (judgeType('string', vDevId)) {
+        // 找到视频设备ID
         Object.assign(video, { deviceId: vDevId })
-      } else if (!judgeType('undefined', facingMode)) {
+      } else if (judgeType('string', facingMode)) {
         // 已指明视频轨朝向
         log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
         Object.assign(video, { facingMode })
       }
-    } else if (!judgeType('undefined', vGroupId)) {
+    } else if (judgeType('string', vGroupId)) {
       // 指定视频设备组ID
-      log.d(`指定视频设备组ID vGroupId = ${vGroupId}`)
+      log.i(`指定视频设备组ID vGroupId = ${vGroupId}`)
       video = {
         groupId: vGroupId,
         frameRate: { ideal: frameRate, max: maxFrameRate },
@@ -134,32 +133,31 @@ const MediaBase = Base => class MediaBase extends Base {
   }
 
   /**
-    * 获取媒体流
-    * 返回 mediaStream
+    * 获取流媒体
+    * @param {object} audio 音频轨约束
+    * @param {object} video 视频轨约束
+    * @return {object} 流媒体
     */
-  async [getMedia] (constraints = {}) {
-    // 约束
-    const {
-      audio = false,
-      video = false
-    } = constraints
-    log.d('正在获取流媒体')
+  async [getMedia] ({ audio = false, video = false }) {
+    let media
 
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       // chrome 53 及以上
       try {
-        let media = await navigator.mediaDevices.getUserMedia({
+        media = await navigator.mediaDevices.getUserMedia({
           audio,
           video
         })
+
         log.d('获取流媒体成功: ', media)
-        return media
       } catch (err) {
         if (err.message) {
           log.e(err.message)
         }
         throw new Error('获取流媒体失败')
       }
+
+      return media
     } else {
       throw new Error('未找到 mediaDevices.getUserMedia 方法')
     }
@@ -167,7 +165,7 @@ const MediaBase = Base => class MediaBase extends Base {
 
   /**
    * 检测流状态
-   * 激活状态返回true，终止状态返回false
+   * @return {boolean} 激活状态true，终止状态false
    */
   [isActive] () {
     if (this.mediaStream && this.mediaStream instanceof MediaStream) {

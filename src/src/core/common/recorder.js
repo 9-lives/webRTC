@@ -40,7 +40,7 @@ export class Recorder extends RtcCommon {
     }
 
     let opt = {}
-    if (!judgeType('undefined', type)) {
+    if (judgeType('string', type)) {
       switch (type) {
         case 'rec':
           Object.assign(opt, audioBitsPerSecond)
@@ -58,7 +58,7 @@ export class Recorder extends RtcCommon {
     })
 
     if (!window.MediaRecorder) {
-      log.e('recorder 初始化失败[RTCPeerConnection API 不存在]')
+      log.e('recorder 初始化失败[MediaRecorder API 不存在]，请更换或升级浏览器')
       return false
     }
 
@@ -73,18 +73,19 @@ export class Recorder extends RtcCommon {
   rec (options = {}) {
     return new Promise((resolve, reject) => {
       if (super[isActive]()) {
-        let blobArr = [] // 用于测试
+        // let blobArr = [] // 用于测试
         this.recorder.ondataavailable = ret => {
-          blobArr.push(ret.data)
+          // blobArr.push(ret.data)
           this.ws.send(ret.data)
         }
         this.recorder.onstop = ret => {
           log.d('停止录制')
           // 用于测试
-          let blob = new Blob(blobArr, {
-            type: this.recorder.mimeType
-          })
-          resolve(blob)
+          // let blob = new Blob(blobArr, {
+          //   type: this.recorder.mimeType
+          // })
+          // resolve(blob)
+          resolve()
         }
 
         let ret = this[recStart]()

@@ -4,7 +4,7 @@ import * as errCode from '../../../constants/errorCode/index'
 import { judgeType, log } from '../../../utils/index'
 
 /**
- * 钩子函数类(mixin 混入类)
+ * 钩子函数类
  */
 export const Hook = Base => class Hook extends Base {
   constructor (options = {}) {
@@ -22,7 +22,7 @@ export const Hook = Base => class Hook extends Base {
    * @param {object} pairs key: 事件名, value: 回调方法
    */
   _rtcEvtsSubscribe ({ pairs }) {
-    if (pairs instanceof Object) {
+    if (judgeType('object', pairs)) {
       let names = Object.values(evtNames) // 事件表
       for (let [n, f] of Object.entries(pairs)) {
         if (names.indexOf(n) !== -1) {

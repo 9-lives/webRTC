@@ -1,9 +1,8 @@
 export const webRtcConfig = {
   /**
-   * RMS 服务器地址
+   * websocket[信令通道]
    */
   rmsUrl: 'ws://rms.szzt.com/robot/wsConnect',
-  // rmsUrl: 'ws://10.11.0.242:8070/robot/wsConnect',
   /**
    * 机器人监控 stun 服务器地址
    */

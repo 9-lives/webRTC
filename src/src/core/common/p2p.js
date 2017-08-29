@@ -51,7 +51,7 @@ export class P2P extends RtcCommon {
     // 准备 sdp 协商(offerer)
     this.peerConn.onnegotiationneeded = async evt => {
       log.d('发起 sdp 协商')
-      this[createSDP]({ type: 'offer' })
+      await this[createSDP]({ type: 'offer' })
     }
 
     // 接收到远程流媒体(标准已移除)

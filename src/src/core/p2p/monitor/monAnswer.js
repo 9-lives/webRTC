@@ -13,7 +13,7 @@ export class MonAnswer extends P2P {
   constructor (options = {}) {
     super(options)
 
-    this.addIceReady = false // (临时方案),offer[远程] 设置完成，可以添加ice候选
+    this.addIceReady = false // offer[远程] 设置完成，可以添加ice候选 (临时方案)
     this.iceBuff = [] // ice candidate[来自远程] 缓冲数组
   }
 

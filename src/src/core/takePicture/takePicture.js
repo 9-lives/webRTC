@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../utils/index'
 import { RtcCommon } from '../common/base/index'
-import { createConstraints, getVideoById, getCanvasById, getDevId, getMedia, isActive } from '../../constants/methods/index'
+import { createConstraints, getVideoById, getCanvasById, getMedia, isActive } from '../../constants/methods/index'
 
 /**
  * webRTC 拍照
@@ -40,7 +40,7 @@ export class TakePicture extends RtcCommon {
     }
 
     // 获取设备ID
-    let devIds = await super[getDevId]()
+    let devIds = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
     let constraints = super[createConstraints](options, devIds)
@@ -72,7 +72,6 @@ export class TakePicture extends RtcCommon {
       h = isNaN(h) ? 0 : h
 
       this.canvas.getContext('2d').drawImage(this.video, 0, 0, w, h)
-      log.d('拍照成功')
       return true
     } else {
       log.e('拍照失败[流媒体未激活]')

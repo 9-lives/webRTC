@@ -3,7 +3,6 @@
  */
 
 // media 类
-export const getDevId = Symbol('getDevId') // 搜集多媒体设备ID
 export const getMedia = Symbol('getMedia') // 开启多媒体设备
 export const createConstraints = Symbol('createConstraints') // 创造约束
 export const getVideoById = Symbol('getVideoById') // 查找 video 元素

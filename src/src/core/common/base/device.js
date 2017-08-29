@@ -1,6 +1,5 @@
 import { log } from '../../../utils'
 import { judgeType } from '../../../index'
-import { getDevId } from '../../../constants/methods/index'
 
 export const getVDevId = Symbol('getVDevId')
 export const getADevId = Symbol('getADevId')
@@ -12,7 +11,7 @@ export class Device {
   /**
     * 获取多媒体IO设备信息
     */
-  async [getDevId] () {
+  async _rtcGetDevInfo () {
     // 多媒体IO设备原始信息
     let originalInfo = await enumerateDevs()
     let devInfo = devfilter({
@@ -27,6 +26,7 @@ export class Device {
 
     if (devInfo.audio.length === 0) {
       log.d('未找到音频输入设备')
+
       if (!flag) {
         throw new Error('未找到多媒体IO设备')
       }
@@ -41,11 +41,11 @@ export class Device {
   [getVDevId] (options = {}) {
     const {
       camera, // 摄像头序号
-      vLabel, // 摄像头标签
+      devIds, // 硬件ID
       facingMode, // 视频源方向
-      vid, // 摄像头vid
       pid, // 摄像头pid
-      devIds // 硬件ID
+      vid, // 摄像头vid
+      vLabel // 摄像头标签
     } = options
 
     let vDevId // 视频设备ID
@@ -200,22 +200,60 @@ function devfilter ({ originalInfo = [] }) {
 }
 
 /**
-  * 枚举设备信息
+  * 枚举多媒体IO设备信息
   * @return {array} 多媒体IO设备原始信息
   */
 async function enumerateDevs () {
   let originalInfo
 
   if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-    // 枚举多媒体IO设备信息
     originalInfo = await navigator.mediaDevices.enumerateDevices()
   } else {
-    throw new Error('未找到 enumerateDevices 方法，请升级浏览器版本')
+    throw new Error('未找到 enumerateDevices 方法，请更换或升级浏览器')
   }
 
   log.i('原始设备信息：', originalInfo)
 
   return originalInfo
+}
+
+/**
+  * 通过设备序号查找音频设备ID
+  * @param {object} devIds
+  * @param {number} mic
+  * @return {string} 音频设备ID
+  */
+function getADevIdByNo ({ devIds = {}, mic = 0 }) {
+  log.i(`指定音频设备序号 ${mic}`)
+
+  if (devIds.audio[mic] && devIds.audio[mic].deviceId) {
+    return devIds.audio[mic].deviceId
+  }
+
+  log.d('取音频设备ID失败[序号对应设备未找到]')
+
+  return undefined
+}
+
+/**
+  * 通过标签查找音频设备ID
+  * @param {object} devIds
+  * @param {string} mLabel
+  * @return {string} 音频设备ID
+  */
+function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
+  log.i(`指定音频设备标签 label = ${mLabel}`)
+
+  let info = devIds.audio.find(dev => {
+    return dev['label'] === mLabel && dev['deviceId']
+  })
+
+  if (!info) {
+    log.d('取音频设备ID失败[标签对应设备未找到]')
+    return undefined
+  } else {
+    return info['deviceId']
+  }
 }
 
 /**
@@ -254,45 +292,6 @@ function getVDevIdByIDPair ({ devIds = {}, pid = '', vid = '' }) {
 
   if (!info) {
     log.d('取视频设备ID失败[pid、vid 对应设备未找到]')
-    return undefined
-  } else {
-    return info['deviceId']
-  }
-}
-
-/**
-  * 通过设备序号查找音频设备ID
-  * @param {object} devIds
-  * @param {number} mic
-  * @return {string} 音频设备ID
-  */
-function getADevIdByNo ({ devIds = {}, mic = 0 }) {
-  log.i(`指定音频设备序号 ${mic}`)
-
-  if (devIds.audio[mic] && devIds.audio[mic].deviceId) {
-    return devIds.audio[mic].deviceId
-  }
-
-  log.d('取音频设备ID失败[序号对应设备未找到]')
-
-  return undefined
-}
-
-/**
-  * 通过标签查找音频设备ID
-  * @param {object} devIds
-  * @param {string} mLabel
-  * @return {string} 音频设备ID
-  */
-function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
-  log.i(`指定音频设备标签 label = ${mLabel}`)
-
-  let info = devIds.audio.find(dev => {
-    return dev['label'] === mLabel && dev['deviceId']
-  })
-
-  if (!info) {
-    log.d('取音频设备ID失败[标签对应设备未找到]')
     return undefined
   } else {
     return info['deviceId']

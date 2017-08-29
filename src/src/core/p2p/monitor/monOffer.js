@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
-import { connect, createConstraints, errHandler, getDevId, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
+import { connect, createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 
 export const wsReconnect = Symbol('wsReconnect')
 
@@ -24,7 +24,7 @@ export class MonOffer extends P2P {
     await super[connect]()
 
     // 获取设备ID
-    let devIds = await super[getDevId]()
+    let devIds = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
     let constraints = super[createConstraints](options, devIds)
