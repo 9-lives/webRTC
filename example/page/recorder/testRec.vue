@@ -1,46 +1,49 @@
 <template>
   <div>
     <div class="block">
-      <video id="rec2aaa" width=400 height=300></video>
-      <video id="rec2ccc" width=400 height=300 @ended="ended" ></video>
+      <video id="rec2aaa" width=400 height=300 autoplay></video>
     </div>
+    <ui-selectlabel :devInfo="devInfo" @chosenA="getMLabel" @chosenV="getVLabel"/>
     <div class="block">
-      <button @click="preview">预览</button>
+      <button :disabled="btnClicked" @click="preview">预览</button>
+      <button :disabled="!btnClicked" @click="stopPreview">关闭预览</button>
       <button @click="rec">录像</button>
-      <button @click="play">播放</button>
       <button @click="stop">停止</button>
     </div>
-    <div class="block">
-      <button @click="$router.push({ name: 'home' })">返回主页</button>
-    </div>
+    <ui-gohome />
   </div>
 </template>
 <script>
+  import { selectLabel, goHome } from '@/components/ui/index'
   import { Rec } from 'webRTC/src/core/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../config'
   export default {
+    components: {
+      'ui-gohome': goHome,
+      'ui-selectlabel': selectLabel
+    },
     data () {
       return {
+        btnClicked: false,
+        devInfo: {}, // 设备信息
+        mLabel: '', // 选中的视频设备标签
         recorder: undefined,
-        url: undefined
+        vLabel: '' // 选中的音频设备标签
       }
     },
-    mounted () {
+    created () {
       this.begin()
     },
     beforeDestroy () {
       this.recorder.close()
-      if (typeof url !== 'undefined') {
-        window.URL.revokeObjectURL(this.url)
-      }
     },
     methods: {
       async begin () {
         try {
           this.init()
           this.bindEvts()
-          await this.start()
+          this.devInfo = await this.recorder._rtcGetDevInfo()
         } catch (err) {
           if (err.message) {
             log.e(err.message)
@@ -55,9 +58,6 @@
 
         this.recorder._rtcEvtsSubscribe({ pairs: evtPairs })
       },
-      ended () {
-        this.preview()
-      },
       errHandler (options = {}) {
         const {
           type,
@@ -69,7 +69,18 @@
           case 'websocket':
             // websocket 错误
             break
+          case 'peerConnection':
+            // p2p 错误
+            break
         }
+      },
+      // 选择麦克风标签
+      getMLabel (val) {
+        this.mLabel = val
+      },
+      // 选择摄像头标签
+      getVLabel (val) {
+        this.vLabel = val
       },
       init () {
         try {
@@ -83,50 +94,45 @@
           log.e('Rec 对象初始化失败')
         }
       },
-      play () {
-        // 模拟测试时避免回声
-        document.querySelector('#rec2aaa').pause()
-        document.querySelector('#rec2ccc').play()
-      },
-      preview () {
-        document.querySelector('#rec2aaa').play()
-      },
-      async rec () {
-        try {
-          let ret = await this.recorder.rec()
-          if (ret === false) {
-            log.e('录像失败')
-          }
-          this.url = window.URL.createObjectURL(ret)
-          document.querySelector('#rec2ccc').src = this.url
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
-          }
-          log.e('录像失败')
-        }
-      },
-      async start () {
+      async preview () {
         let ret = await this.recorder.start({
-          // camera: 0,
-          // vLabel: 'BisonCam, NB Pro (5986:0401)',
-          // vid: '5986',
+          // camera: 0, // 摄像头序号
+          facingMode: 'user', // 视频轨方向
           // pid: '0401',
-          facingMode: 'user',
-          mic: 2,
-          mLabel: '麦克风 (VIA HD Audio(Win 10))',
+          // vid: '5986',
+          vLabel: this.vLabel, // 摄像头标签
+          mic: 2, // 麦克风序号
+          mLabel: this.mLabel, // 麦克风标签
           videoId: 'rec2aaa',
-          duration: 6000,
-          timeSlice: 3000
+          duration: 6000, // 录制时长
+          timeSlice: 3000 // 时间片大小
         })
         if (ret === true) {
           log.d('设备已打开')
         } else {
           log.e('设备开启失败')
         }
+
+        this.btnClicked = !(this.btnClicked === true)
+      },
+      stopPreview () {
+        this.recorder.close()
+        this.btnClicked = !(this.btnClicked === true)
+      },
+      rec () {
+        try {
+          let ret = this.recorder.rec()
+          if (ret === false) {
+            // TODO 录制失败处理
+          }
+        } catch (err) {
+          if (err.message) {
+            log.e(err.message)
+          }
+        }
       },
       stop () {
-        this.recorder.stop()
+        this.recorder.recStop()
       }
     }
   }

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="block">
-      <video id="vida" autoplay width=400 height=300 ref="vida"></video>
+      <video autoplay width=400 height=300 ref="vida"></video>
     </div>
     <div class="block">
       <button @click="start">开启连接</button>
@@ -35,7 +35,7 @@
         log.e('初始化失败')
       }
     },
-    beforeDestroyed () {
+    beforeDestroy () {
       this.close()
     },
     methods: {

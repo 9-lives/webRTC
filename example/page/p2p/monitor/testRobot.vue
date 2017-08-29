@@ -1,33 +1,36 @@
 <template>
   <div>
+    <ui-selectlabel :devInfo="devInfo" @chosenA="getMLabel" @chosenV="getVLabel"/>
     <div class="block">
-      <video autoplay width=400 height=300 ></video>
+      <button :disabled="btnClicked" @click="start">开启连接</button>
+      <button :disabled="!btnClicked" @click="close">关闭连接</button>
     </div>
-    <div class="block">
-      <button @click="start">开启连接</button>
-      <button @click="close">关闭连接</button>
-    </div>
-    <div class="block">
-      <button @click="$router.push({ name: 'home' })">返回主页</button>
-    </div>
+    <ui-gohome />
   </div>
 </template>
 <script>
+  import { selectLabel, goHome } from '@/components/ui/index'
   import { MonOffer } from 'webRTC/src/core/p2p/monitor/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../../config'
   import * as errCode from 'webRTC/src/constants/errorCode/index'
   export default {
+    components: {
+      'ui-gohome': goHome,
+      'ui-selectlabel': selectLabel
+    },
     data () {
       return {
-        conn: undefined
+        btnClicked: false,
+        conn: undefined,
+        devInfo: {}, // 设备信息
+        mLabel: '', // 选中的视频设备标签
+        vLabel: '' // 选中的音频设备标签
       }
     },
-    async mounted () {
+    async created () {
       try {
-        this.init()
-        this.bindEvts()
-        await this.start()
+        await this.begin()
       } catch (err) {
         if (err.message) {
           log.e(err.message)
@@ -35,10 +38,15 @@
         log.e('初始化失败')
       }
     },
-    beforeDestroyed () {
+    beforeDestroy () {
       this.close()
     },
     methods: {
+      async begin () {
+        this.init()
+        this.bindEvts()
+        this.devInfo = await this.conn._rtcGetDevInfo()
+      },
       bindEvts () {
         let evtsPairs = {} // 批量订阅参数
 
@@ -92,6 +100,7 @@
       },
       close () {
         this.conn.close()
+        this.btnClicked = !(this.btnClicked === true)
       },
       errHandler (options = {}) {
         const {
@@ -114,6 +123,14 @@
             }
             break
         }
+      },
+      // 选择麦克风标签
+      getMLabel (val) {
+        this.mLabel = val
+      },
+      // 选择摄像头标签
+      getVLabel (val) {
+        this.vLabel = val
       },
       init () {
         try {
@@ -145,9 +162,9 @@
           facingMode: 'user',
           // pid: 'b5a7',
           // vid: '04f2',
-          // vLabel: 'Chicony USB 2.0 Camera (04f2:b5a7)',
+          vLabel: this.vLabel,
           // mic: 2,
-          mLabel: '麦克风 (Realtek High Definition Audio)',
+          mLabel: this.mLabel,
           frameRate: 10,
           width: 480,
           height: 360
@@ -157,6 +174,8 @@
         } else {
           log.e('视频设备开启失败')
         }
+
+        this.btnClicked = !(this.btnClicked === true)
       }
     }
   }

@@ -20,7 +20,7 @@ export class Rec extends Recorder {
     } = options
 
     // 建立 websocket 连接
-    // await super[connect]()
+    await super[connect]()
 
     if (videoId) {
       this.video = super[getVideoById](videoId)
@@ -51,9 +51,9 @@ export class Rec extends Recorder {
    * 录像(MediaRecorder)
    * chrome 47及以上版本
    */
-  async rec (options = {}) {
+  rec (options = {}) {
     Object.assign(options, { type: 'rec' })
-    let ret = await super.rec(options)
+    let ret = super.rec(options)
     if (ret === false) {
       return false
     } else {

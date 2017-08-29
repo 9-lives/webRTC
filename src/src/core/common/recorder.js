@@ -1,6 +1,6 @@
 import { RtcCommon } from './index'
 import { judgeType, log } from '../../index'
-import { isActive, recStart, recStop } from '../../constants/methods/index'
+import { isActive, recStart } from '../../constants/methods/index'
 
   /**
    * webRTC recorder 基础类
@@ -71,30 +71,24 @@ export class Recorder extends RtcCommon {
    * 录像(MediaRecorder)
    */
   rec (options = {}) {
-    return new Promise((resolve, reject) => {
-      if (super[isActive]()) {
-        // let blobArr = [] // 用于测试
-        this.recorder.ondataavailable = ret => {
-          // blobArr.push(ret.data)
+    if (super[isActive]()) {
+      this.recorder.ondataavailable = ret => {
+        if (this.ws && this.ws.send) {
           this.ws.send(ret.data)
         }
-        this.recorder.onstop = ret => {
-          log.d('停止录制')
-          // 用于测试
-          // let blob = new Blob(blobArr, {
-          //   type: this.recorder.mimeType
-          // })
-          // resolve(blob)
-          resolve()
-        }
-
-        let ret = this[recStart]()
-
-        if (ret === false) reject(new Error('录制错误'))
-      } else {
-        reject(new Error('录制错误'))
       }
-    })
+
+      this.recorder.onstop = ret => {
+        log.d('停止录制')
+      }
+
+      if (!this[recStart]()) {
+        return false
+      }
+    } else {
+      log.e('录制失败[媒体流未激活]')
+      return false
+    }
   }
 
   /**
@@ -115,7 +109,7 @@ export class Recorder extends RtcCommon {
 
     if (this.duration !== 0) {
       setTimeout(() => {
-        this[recStop]()
+        this.recStop()
       }, this.duration)
     }
 
@@ -125,7 +119,7 @@ export class Recorder extends RtcCommon {
   /**
    * 停止录制
    */
-  [recStop] () {
+  recStop () {
     if (MediaRecorder && this.recorder && this.recorder instanceof MediaRecorder) {
       // chrome 47 以上
       if (this.recorder.state !== 'inactive') {

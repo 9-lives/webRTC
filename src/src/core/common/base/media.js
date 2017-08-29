@@ -142,16 +142,15 @@ const MediaBase = Base => class MediaBase extends Base {
         if (this.mediaStream.active) {
           return true
         } else {
-          log.e('媒体流未激活')
           return false
         }
       } else {
-        log.e('检测媒体流状态失败[active属性未找到]')
-        return false
+        throw new Error('检测媒体流状态失败[active属性未找到]')
+        // return false
       }
     } else {
-      log.e('检测媒体流状态失败[媒体流不存在]')
-      return false
+      throw new Error('检测媒体流状态失败[媒体流不存在]')
+      // return false
     }
   }
 }
