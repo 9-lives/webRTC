@@ -172,12 +172,12 @@
       },
       async start () {
         let ret = await this.offer.start({
-          // camera: 0,
+          // camNo: 0,
           facingMode: 'user',
           // pid: 'b5a7',
           // vid: '04f2',
           vLabel: this.camLabel,
-          // mic: 2,
+          // micNo: 2,
           mLabel: this.micLabel,
           frameRate: 10,
           width: 480,

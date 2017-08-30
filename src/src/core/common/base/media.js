@@ -30,18 +30,18 @@ const MediaBase = Base => class MediaBase extends Base {
   /**
    * 构造 MediaTrackConstraints
    */
-  [createConstraints] (options = {}, devIds) {
+  [createConstraints] (options = {}, devInfo) {
     let {
       // MediaTrackConstraints - Audio
       channelCount = 2, // 声道
       echoCancellation = true, // 消除回声
-      mic, // 麦克风序号
+      micNo, // 麦克风序号
       mLabel, // 麦克风标签
       sampleRate = 44100, // 采样率
       sampleSize = 16, // 采样大小
       volumn = 1.0, // 音量
       // MediaTrackConstraints - video
-      camera, // 摄像头序号
+      camNo, // 摄像头序号
       facingMode, // 视频源方向
       frameRate = 24, // 理想帧率
       height = 480, // 理想视频高度
@@ -54,61 +54,37 @@ const MediaBase = Base => class MediaBase extends Base {
 
     let audio // 音频轨约束
     let video // 视频轨约束
-    let aDevId // 麦克风设备ID
-    let vDevId // 摄像头设备ID
+    let aDevId // 音频输入设备ID
+    let vDevId // 视频输入设备ID
 
     vDevId = super[getVDevId]({
-      camera,
+      camNo,
       facingMode,
-      devIds,
+      devInfo,
       pid,
       vid,
       vLabel
     })
 
     aDevId = super[getADevId]({
-      devIds,
-      mic,
+      devInfo,
+      micNo,
       mLabel
     })
 
-    if (judgeType('string', aDevId)) {
-      // 找到音频设备ID
-      audio = {
-        channelCount,
-        deviceId: aDevId,
-        echoCancellation,
-        sampleRate,
-        sampleSize,
-        volumn
-      }
-    } else {
-      log.d('音频轨已禁用[硬件ID未找到]')
-      audio = false
-    }
+    createAudioTrackConstraints({
 
-    if (judgeType('string', vDevId) || judgeType('string', facingMode)) {
-      // 找到视频设备ID或已指定 facingMode
-      // 构造部分 videoTrackConstraints
-      video = {
-        frameRate: { ideal: frameRate, max: maxFrameRate },
-        height: { ideal: height },
-        width: { ideal: width }
-      }
+    })
 
-      if (judgeType('string', vDevId)) {
-        // 找到视频设备ID
-        Object.assign(video, { deviceId: vDevId })
-      } else if (judgeType('string', facingMode)) {
-        // 已指明视频轨朝向
-        log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
-        Object.assign(video, { facingMode })
-      }
-    } else {
-      // 禁用视频轨
-      log.d('视频轨已禁用[硬件ID未找到]')
-      video = false
-    }
+    // 构造视频轨约束
+    video = createVideoTrackConstraints({
+      facingMode,
+      frameRate,
+      height,
+      maxFrameRate,
+      vDevId,
+      width
+    })
 
     return {
       audio,
@@ -178,6 +154,81 @@ function stopMediaTracks ({ stream }) {
       track.stop()
     }
   }
+}
+
+/**
+ * 构造音频轨约束
+ * @returns {object | boolean} 音频轨约束
+ */
+function createAudioTrackConstraints (options = {}) {
+  const {
+    channelCount,
+    aDevId,
+    echoCancellation,
+    sampleRate,
+    sampleSize,
+    volumn
+  } = options
+
+  let constraints = {}
+
+  if (judgeType('string', aDevId)) {
+    // 找到音频设备ID
+    constraints = {
+      channelCount,
+      deviceId: aDevId,
+      echoCancellation,
+      sampleRate,
+      sampleSize,
+      volumn
+    }
+  } else {
+    log.d('音频轨已禁用[硬件ID未找到]')
+    constraints = false
+  }
+
+  return constraints
+}
+
+/**
+ * 构造视频轨约束
+ * @returns {object | boolean} 视频轨约束
+ */
+function createVideoTrackConstraints (options = {}) {
+  const {
+    facingMode,
+    frameRate,
+    height,
+    maxFrameRate,
+    vDevId,
+    width
+  } = options
+
+  let constraints = {}
+
+  if (judgeType('undefined', vDevId) && !judgeType('string', facingMode)) {
+    // 禁用视频轨
+    log.d('视频轨已禁用[硬件ID未找到]')
+    return false
+  }
+
+  // 找到视频设备ID或已指定 facingMode
+  constraints = {
+    frameRate: { ideal: frameRate, max: maxFrameRate },
+    height: { ideal: height },
+    width: { ideal: width }
+  }
+
+  if (judgeType('string', vDevId)) {
+    // 找到视频设备ID
+    Object.assign(constraints, { deviceId: vDevId })
+  } else if (judgeType('string', facingMode)) {
+    // 已指明视频轨朝向
+    log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
+    Object.assign(constraints, { facingMode })
+  }
+
+  return constraints
 }
 
 // Media 类继承 Device 类

@@ -57,7 +57,7 @@
       },
       async preview () {
         let ret = await this.tp.start({
-          // camera: 0,
+          // camNo: 0,
           canvasId: 'tpccc',
           facingMode: 'user', // 视频轨方向
           // pid: '0401',

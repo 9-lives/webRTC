@@ -18,11 +18,11 @@ export class MonOffer extends P2P {
     // PeerConnection 对象初始化
     await super[pConnInit]()
 
-    // 获取设备ID
-    let devIds = await super._rtcGetDevInfo()
+    // 获取设备信息
+    let devInfo = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
-    let constraints = super[createConstraints](options, devIds)
+    let constraints = super[createConstraints](options, devInfo)
 
     // 获取媒体流
     this.mediaStream = await super[getMedia](constraints)

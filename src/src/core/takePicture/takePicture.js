@@ -19,12 +19,12 @@ export class TakePicture extends RtcBase {
    */
   async start (options = {}) {
     const {
-      camera = 0, // 摄像头序号
+      camNo = 0, // 摄像头序号
       canvasId, // canvas 标签ID
       videoId // video 标签ID
     } = options
 
-    if (isNaN(Number.parseInt(camera))) {
+    if (isNaN(Number.parseInt(camNo))) {
       log.e('错误的摄像头序号')
       return false
     }
@@ -40,10 +40,10 @@ export class TakePicture extends RtcBase {
     }
 
     // 获取设备ID
-    let devIds = await super._rtcGetDevInfo()
+    let devInfo = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
-    let constraints = super[createConstraints](options, devIds)
+    let constraints = super[createConstraints](options, devInfo)
 
     // 获取媒体流
     this.mediaStream = await super[getMedia](constraints)

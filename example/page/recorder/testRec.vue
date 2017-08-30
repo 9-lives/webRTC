@@ -129,12 +129,12 @@
       },
       async preview () {
         let ret = await this.recorder.start({
-          // camera: 0, // 摄像头序号
+          // camNo: 0, // 摄像头序号
           facingMode: 'user', // 视频轨方向
           // pid: '0401',
           // vid: '5986',
           vLabel: this.camLabel, // 摄像头标签
-          mic: 2, // 麦克风序号
+          micNo: 2, // 麦克风序号
           mLabel: this.micLabel, // 麦克风标签
           videoId: 'rec2aaa',
           duration: 6000, // 录制时长

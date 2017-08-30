@@ -40,8 +40,8 @@ export class Device {
     */
   [getVDevId] (options = {}) {
     const {
-      camera, // 摄像头序号
-      devIds, // 硬件ID
+      camNo, // 摄像头序号
+      devInfo, // 硬件ID
       facingMode, // 视频源方向
       pid, // 摄像头pid
       vid, // 摄像头vid
@@ -53,7 +53,7 @@ export class Device {
     if (judgeType('string', vid, pid)) {
       // 已指定 vid、pid 对
       vDevId = getVDevIdByIDPair({
-        devIds,
+        devInfo,
         pid,
         vid
       })
@@ -64,11 +64,11 @@ export class Device {
       }
     }
 
-    if (judgeType('number', camera)) {
+    if (judgeType('number', camNo)) {
       // 已指定摄像头序号
       vDevId = getVDevIdByNo({
-        camera,
-        devIds,
+        camNo,
+        devInfo,
         facingMode
       })
 
@@ -81,7 +81,7 @@ export class Device {
     if (judgeType('string', vLabel)) {
       // 已指定设备标签
       vDevId = getVDevIdByLabel({
-        devIds,
+        devInfo,
         vLabel
       })
 
@@ -96,7 +96,7 @@ export class Device {
       return undefined
     }
 
-    if (!judgeType('undefined', pid, vid, camera, vLabel, facingMode)) {
+    if (!judgeType('undefined', pid, vid, camNo, vLabel, facingMode)) {
       log.e('取视频设备ID失败')
     }
 
@@ -108,18 +108,18 @@ export class Device {
     */
   [getADevId] (options = {}) {
     const {
-      mic, // 麦克风序号
+      micNo, // 麦克风序号
       mLabel, // 麦克风标签
-      devIds = {} // 硬件ID
+      devInfo = {} // 硬件ID
     } = options
 
     let aDevId
 
-    if (judgeType('number', mic)) {
+    if (judgeType('number', micNo)) {
       // 已指定麦克风序号
       aDevId = getADevIdByNo({
-        mic,
-        devIds
+        micNo,
+        devInfo
       })
 
       if (aDevId) {
@@ -131,7 +131,7 @@ export class Device {
     if (judgeType('string', mLabel)) {
       // 已指定设备标签
       aDevId = getADevIdByLabel({
-        devIds,
+        devInfo,
         mLabel
       })
 
@@ -141,7 +141,7 @@ export class Device {
       }
     }
 
-    if (!judgeType('undefined', mic, mLabel)) {
+    if (!judgeType('undefined', micNo, mLabel)) {
       log.e('取音频设备ID失败')
     }
 
@@ -225,15 +225,15 @@ async function enumerateDevs () {
 
 /**
   * 通过设备序号查找音频设备ID
-  * @param {object} devIds 设备信息
-  * @param {number} mic
+  * @param {object} devInfo 设备信息
+  * @param {number} micNo // 麦克风序号
   * @returns {string} 音频设备ID
   */
-function getADevIdByNo ({ devIds = {}, mic = 0 }) {
-  log.i(`指定音频设备序号 ${mic}`)
+function getADevIdByNo ({ devInfo = {}, micNo = 0 }) {
+  log.i(`指定音频设备序号 ${micNo}`)
 
-  if (devIds.audio[mic] && devIds.audio[mic].deviceId) {
-    return devIds.audio[mic].deviceId
+  if (devInfo.audio[micNo] && devInfo.audio[micNo].deviceId) {
+    return devInfo.audio[micNo].deviceId
   }
 
   log.d('取音频设备ID失败[序号对应设备未找到]')
@@ -243,14 +243,14 @@ function getADevIdByNo ({ devIds = {}, mic = 0 }) {
 
 /**
   * 通过标签查找音频设备ID
-  * @param {object} devIds 设备信息
+  * @param {object} devInfo 设备信息
   * @param {string} mLabel
   * @returns {string} 音频设备ID
   */
-function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
+function getADevIdByLabel ({ devInfo = {}, mLabel = '' }) {
   log.i(`指定音频设备标签 label = ${mLabel}`)
 
-  let info = devIds.audio.find(dev => {
+  let info = devInfo.audio.find(dev => {
     return dev['label'] === mLabel && dev['deviceId']
   })
 
@@ -264,14 +264,14 @@ function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
 
 /**
   * 通过设备标签查找视频设备ID
-  * @param {object} devIds 设备信息
+  * @param {object} devInfo 设备信息
   * @param {number} vLabel
   * @returns {string} 视频设备ID
   */
-function getVDevIdByLabel ({vLabel, devIds}) {
+function getVDevIdByLabel ({vLabel, devInfo}) {
   log.i(`指定视频设备标签 label = ${vLabel}`)
 
-  let info = devIds.video.find(dev => {
+  let info = devInfo.video.find(dev => {
     return dev.label === vLabel
   })
 
@@ -290,10 +290,10 @@ function getVDevIdByLabel ({vLabel, devIds}) {
   * @param {string} vid
   * @returns {string} 视频设备ID
   */
-function getVDevIdByIDPair ({ devIds = {}, pid = '', vid = '' }) {
+function getVDevIdByIDPair ({ devInfo = {}, pid = '', vid = '' }) {
   log.i(`指定摄像头 vid = ${vid}, pid = ${pid}`)
 
-  let info = devIds.video.find(dev => {
+  let info = devInfo.video.find(dev => {
     return dev['vid'] === vid && dev['pid'] === pid && dev['deviceId']
   })
 
@@ -307,24 +307,24 @@ function getVDevIdByIDPair ({ devIds = {}, pid = '', vid = '' }) {
 
 /**
   * 通过设备序号查找视频设备ID
-  * @param {number} camera 摄像头序号
+  * @param {number} camNo 摄像头序号
   * @param {object} facingMode 视频源指向
-  * @param {object} devIds 设备信息
+  * @param {object} devInfo 设备信息
   * @returns {string} 视频设备ID
   */
 function getVDevIdByNo (options = {}) {
   let {
-    camera,
-    devIds = {},
+    camNo,
+    devInfo = {},
     facingMode
   } = options
 
-  log.i(`指定视频设备序号 ${camera}`)
+  log.i(`指定视频设备序号 ${camNo}`)
 
-  let dev = devIds.video
+  let dev = devInfo.video
 
-  if (dev && dev[camera] && dev[camera].deviceId) {
-    return dev[camera].deviceId
+  if (dev && dev[camNo] && dev[camNo].deviceId) {
+    return dev[camNo].deviceId
   }
 
   log.d('取视频设备ID失败[序号对应设备未找到]')
