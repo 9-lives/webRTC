@@ -13,6 +13,26 @@ const MediaBase = Base => class MediaBase extends Base {
   }
 
   /**
+   * 关闭
+   */
+  close () {
+    if (this.mediaStream instanceof MediaStream) {
+      // 关闭媒体轨
+      stopMediaTracks({
+        stream: this.mediaStream
+      })
+
+      if (this.video && !this.video.srcObject) {
+        // 是否需要手动释放?
+        this.video.srcObject = undefined
+      }
+
+      this.canvas = this.mediaStream = this.video = undefined
+      log.d('多媒体设备已关闭')
+    }
+  }
+
+  /**
    * 构造 MediaTrackConstraints
    */
   [createConstraints] (options = {}, devIds) {
@@ -147,6 +167,20 @@ const MediaBase = Base => class MediaBase extends Base {
     } else {
       log.e('检测媒体流状态失败[媒体流不存在]')
       return false
+    }
+  }
+}
+
+/**
+ * 关闭流媒体的所有轨道
+ * @param {object} stream 流媒体
+ */
+function stopMediaTracks ({ stream }) {
+  let tracks = stream.getTracks()
+
+  if (tracks && tracks instanceof Array) {
+    for (let track of tracks) {
+      track.stop()
     }
   }
 }

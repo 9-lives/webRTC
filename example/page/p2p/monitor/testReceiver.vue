@@ -3,17 +3,19 @@
     <div class="block">
       <video autoplay width=400 height=300 ref="vida"></video>
     </div>
-    <div class="block">
-      <button @click="$router.push({ name: 'home' })">返回主页</button>
-    </div>
+    <ui-gohome />
   </div>
 </template>
 <script>
+  import { goHome } from '@/components/ui/index'
   import { MonAnswer } from 'webRTC/src/core/p2p/monitor/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../../config'
   import * as errCode from 'webRTC/src/constants/errorCode/index'
   export default {
+    components: {
+      'ui-gohome': goHome
+    },
     data () {
       return {
         conn: undefined,
@@ -145,9 +147,9 @@
           this.ws.onopen = async evt => {
             if (this.ws.readyState !== 1) {
               this.ws.close()
-              reject(new Error('websocket[webRTC] 连接建立失败'))
+              reject(new Error('websocket[信令通道] 连接建立失败'))
             } else {
-              log.d('websocket[webRTC] 已连接')
+              log.d('websocket[信令通道] 已连接')
               this.wsAuthorizaion()
 
               resolve()

@@ -1,11 +1,12 @@
 import { log } from '../../../index'
+import { Media } from './index'
 import { getVideoById, getCanvasById } from '../../../constants/methods/index'
 
 /**
- * DOM元素操作类(mixin 混入类)
+ * DOM元素操作类
  *  仅兼容chrome 53 及以上版本
  */
-export const HtmlEle = Base => class HtmlEle extends Base {
+export const HtmlElement = Base => class HtmlEle extends Base {
   constructor (options) {
     super(options)
     this.canvas = undefined // canvas元素

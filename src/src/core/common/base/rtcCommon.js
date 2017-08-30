@@ -1,45 +1,12 @@
 import { judgeType, log } from '../../../index'
-import { Connect, Hook, HtmlEle, Media } from './index'
+import { Hook, HtmlElement, Media } from './index'
 
 /**
- * webRTC 基础类
+ * webRTC 基础类(mixin 混入)
+ * 多继承钩子函数类、DOM元素类、流媒体类。
  */
-export class RtcCommon extends Connect(Hook(HtmlEle(Media))) {
+export class RtcCommon extends Hook(HtmlElement(Media)) {
   constructor (options = {}) {
     super(options)
-  }
-
-  /**
-   * 关闭
-   */
-  close () {
-    if (this.mediaStream instanceof MediaStream) {
-      // 关闭媒体轨
-      stopMediaTracks({
-        stream: this.mediaStream
-      })
-
-      if (this.video && !this.video.srcObject) {
-        // 是否需要手动释放?
-        this.video.srcObject = undefined
-      }
-
-      this.canvas = this.mediaStream = this.video = undefined
-      log.d('多媒体设备已关闭')
-    }
-  }
-}
-
-/**
- * 关闭流媒体的所有轨道
- * @param {object} stream 流媒体
- */
-function stopMediaTracks ({ stream }) {
-  let tracks = stream.getTracks()
-
-  if (tracks && tracks instanceof Array) {
-    for (let track of tracks) {
-      track.stop()
-    }
   }
 }

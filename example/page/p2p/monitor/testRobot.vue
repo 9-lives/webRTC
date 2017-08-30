@@ -96,6 +96,10 @@
               case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
                 log.e('p2p建立连接超时')
                 break
+              case errCode.P2P_ICECONN_FAILED:
+                // TODO 连接异常关闭处理
+                this.close()
+                break
               default:
                 break
             }

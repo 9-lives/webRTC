@@ -8,12 +8,13 @@
 export const errHandler = 'errHandler'
 
 /**
- * MediaRecorder 事件
+ * 录制事件
  */
 export const recDataAvail = 'recDataAvail' // 可获取录制数据
+export const recClosed = 'recClosed' // 连接已正常关闭
 
 /**
- * peerConnection 事件
+ * p2p 事件
  */
 export const pLocalSDPReady = 'pLocalSDPReady' // 本地 sdp 设置完毕
 export const pOnIceCandidate = 'pOnIceCandidate' // 正在采集本地 ice candidate

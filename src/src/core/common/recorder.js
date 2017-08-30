@@ -71,7 +71,7 @@ export class Recorder extends RtcCommon {
   }
 
   /**
-   * 录像(MediaRecorder)
+   * 录像
    */
   rec (options = {}) {
     if (super[isActive]()) {
@@ -80,7 +80,7 @@ export class Recorder extends RtcCommon {
           evtName: 'recDataAvail',
           args: [ret.data],
           codeName: 'REC_FETCHDATAFAILED',
-          errType: 'websocket'
+          errType: 'mediaRecorder'
         })
       }
 
@@ -129,6 +129,22 @@ export class Recorder extends RtcCommon {
       if (this.recorder.state !== 'inactive') {
         this.recorder.stop()
       }
+    }
+  }
+
+  /**
+   * 关闭连接
+   */
+  async close () {
+    if (this.recorder instanceof MediaRecorder) {
+      this.recStop()
+      super.close()
+
+      this.evtCallBack({
+        evtName: 'recClosed',
+        codeName: 'REC_HOOK_CLOSED',
+        errType: 'peerConnection'
+      })
     }
   }
 }

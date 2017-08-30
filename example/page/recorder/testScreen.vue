@@ -5,24 +5,24 @@
     </div>
     <div class="block">
       <button @click="recScreen">录屏</button>
-      <button @click="play">播放</button>
+      <button @click="stop">停止</button>
     </div>
     <ui-gohome />
   </div>
 </template>
 <script>
-  import { selectLabel, goHome } from '@/components/ui/index'
+  import { goHome } from '@/components/ui/index'
   import { Screen } from 'webRTC/src/core/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../config'
   export default {
     components: {
-      'ui-gohome': goHome,
-      'ui-selectlabel': selectLabel
+      'ui-gohome': goHome
     },
     data () {
       return {
-        screen: undefined
+        screen: undefined,
+        ws: undefined // websocket 录制通道
       }
     },
     mounted () {
@@ -30,12 +30,12 @@
     },
     beforeDestroy () {
       this.screen.close()
+      this.ws.close()
     },
     methods: {
       async begin () {
         try {
-          this.init()
-          this.bindEvts()
+          await this.init()
           await this.connExts()
           await this.start()
         } catch (err) {
@@ -52,6 +52,7 @@
 
         this.screen._rtcEvtsSubscribe({ pairs: evtPairs })
       },
+      // 连接扩展程序
       async connExts () {
         let ret = await this.screen.connExts({
           cTimeout: 5000,
@@ -70,26 +71,53 @@
         } = options
 
         switch (type) {
-          case 'websocket':
+          case 'mediaRecorder':
             // websocket 错误
             break
         }
       },
-      init () {
-        try {
-          this.screen = new Screen({
-            wsIp: webRtcConfig.recScreenUrl
-          })
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
+      async init () {
+        this.initRec()
+        this.bindEvts()
+        await this.initWs()
+      },
+      initWs () {
+        return new Promise((resolve, reject) => {
+          this.ws = new WebSocket(webRtcConfig.rmsUrl)
+
+          this.ws.onopen = async evt => {
+            if (this.ws.readyState !== 1) {
+              this.ws.close()
+              reject(new Error('websocket[录制通道] 连接建立失败'))
+            } else {
+              log.d('websocket[录制通道] 已连接')
+              // TODO 身份认证
+              resolve()
+            }
           }
-          log.e('初始化 Screen 对象失败')
-        }
+
+          this.ws.onmessage = () => {}
+
+          this.ws.onerror = msg => {
+            log.e('websocket[录制通道] 发生错误: ', msg)
+          }
+
+          this.ws.onclose = evt => {
+            if (evt.code === 1000) {
+              log.d('websocket[录制通道] 正常关闭')
+            } else {
+              log.e('websocket[录制通道] 异常关闭: ', evt)
+            }
+          }
+        })
+      },
+      initRec () {
+        this.screen = new Screen()
       },
       play () {
         document.querySelector('#screenaaa').play()
       },
+      // 录屏
       recScreen () {
         try {
           let ret = this.screen.recScreen()
@@ -115,6 +143,9 @@
         } else {
           log.e('录屏开启失败')
         }
+      },
+      stop () {
+        this.screen.recStop()
       }
     }
   }

@@ -87,4 +87,25 @@ export const Hook = Base => class Hook extends Base {
       throw new Error('webRTC 库事件回调方法执行失败[参数错误]')
     }
   }
+
+  /**
+   * 错误回调
+   * type: 错误类型。p2p 错误：'peerConnection'；录制 错误：'mediaRecorder'
+   */
+  async [errHandler] ({ type = '', err = {}, code }) {
+    let f = this.hooks.get(evtNames['errHandler'])
+    if (judgeType('function', f)) {
+      await f({
+        type,
+        value: err,
+        code
+      })
+    } else {
+      log.e(`webRTC 库发生错误，且尚未指定错误处理回调:
+        type = ${type},
+        value = ${err},
+        code = ${code}`
+      )
+    }
+  }
 }
