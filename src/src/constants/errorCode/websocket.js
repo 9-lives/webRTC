@@ -8,6 +8,7 @@
 export const WS_CONN_ESTABLISHFAILED = -1000 // 连接建立失败
 export const WS_CONN_ERROROCCUR = -1001 // 连接发生错误
 export const WS_CONN_EXCEPTIONALCLOSE = -1002 // 连接异常关闭
+export const WS_REC_FETCHDATAFAILED = -1003 // 获取录制数据回调执行失败
 
 /**
  * websocket[webRTC] 事件回调执行失败

@@ -118,7 +118,7 @@ const MediaBase = Base => class MediaBase extends Base {
           video
         })
 
-        log.d('获取流媒体成功: ', media)
+        log.d('获取本地流媒体成功: ', media)
       } catch (err) {
         if (err.message) {
           log.e(err.message)
@@ -137,20 +137,16 @@ const MediaBase = Base => class MediaBase extends Base {
    * @return {boolean} 激活状态 true，终止状态 false
    */
   [isActive] () {
-    if (this.mediaStream && this.mediaStream instanceof MediaStream) {
+    if (this.mediaStream instanceof MediaStream) {
       if (!judgeType('undefined', this.mediaStream.active)) {
-        if (this.mediaStream.active) {
-          return true
-        } else {
-          return false
-        }
+        return this.mediaStream.active
       } else {
-        throw new Error('检测媒体流状态失败[active属性未找到]')
-        // return false
+        log.e('检测媒体流状态失败[active属性未找到]')
+        return false
       }
     } else {
-      throw new Error('检测媒体流状态失败[媒体流不存在]')
-      // return false
+      log.e('检测媒体流状态失败[媒体流不存在]')
+      return false
     }
   }
 }

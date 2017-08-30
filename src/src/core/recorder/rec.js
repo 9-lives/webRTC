@@ -42,7 +42,9 @@ export class Rec extends Recorder {
     }
 
     // 设置 MediaRecorder 对象参数
-    if (super.setParam(options) === false) return false
+    if (!super.setParam(options)) {
+      return false
+    }
 
     return true
   }
@@ -54,10 +56,8 @@ export class Rec extends Recorder {
   rec (options = {}) {
     Object.assign(options, { type: 'rec' })
     let ret = super.rec(options)
-    if (ret === false) {
+    if (!ret) {
       return false
-    } else {
-      return ret
     }
   }
 }

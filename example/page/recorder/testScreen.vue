@@ -7,20 +7,22 @@
       <button @click="recScreen">录屏</button>
       <button @click="play">播放</button>
     </div>
-    <div class="block">
-      <button @click="$router.push({ name: 'home' })">返回主页</button>
-    </div>
+    <ui-gohome />
   </div>
 </template>
 <script>
+  import { selectLabel, goHome } from '@/components/ui/index'
   import { Screen } from 'webRTC/src/core/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../config'
   export default {
+    components: {
+      'ui-gohome': goHome,
+      'ui-selectlabel': selectLabel
+    },
     data () {
       return {
-        screen: undefined,
-        url: undefined
+        screen: undefined
       }
     },
     mounted () {
@@ -28,9 +30,6 @@
     },
     beforeDestroy () {
       this.screen.close()
-      if (typeof this.url !== 'undefined') {
-        window.URL.revokeObjectURL(this.url)
-      }
     },
     methods: {
       async begin () {
@@ -56,7 +55,7 @@
       async connExts () {
         let ret = await this.screen.connExts({
           cTimeout: 5000,
-          pTimeout: 15000
+          aTimeout: 15000
         })
         if (ret === true) {
           log.d('sourceId 获取成功')
@@ -91,22 +90,17 @@
       play () {
         document.querySelector('#screenaaa').play()
       },
-      async recScreen () {
+      recScreen () {
         try {
-          let ret = await this.screen.recScreen()
+          let ret = this.screen.recScreen()
 
           if (ret === false) {
-            log.e('录屏失败')
+            // TODO 录屏失败处理
           }
-          this.url = window.URL.createObjectURL(ret)
-          document.querySelector('#screenaaa').src = this.url
-          // 查看好的视频预览
-          // document.querySelector('#screenaaa').srcObject = ret
         } catch (err) {
           if (err.message) {
             log.e(err.message)
           }
-          log.e('录屏失败')
         }
       },
       async start () {
@@ -115,6 +109,7 @@
           duration: 6000,
           timeSlice: 3000
         })
+
         if (ret === true) {
           log.d('录屏初始化完毕')
         } else {

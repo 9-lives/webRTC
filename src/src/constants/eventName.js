@@ -8,10 +8,11 @@
 export const errHandler = 'errHandler'
 
 /**
- * websocket[信令通道]事件
+ * websocket[webRTC] 事件
  */
 export const wsOpenHandler = 'wsOpenHandler' // 连接成功
 export const wsMsgHandler = 'wsMsgHandler' // 收到消息
+export const wsRecDataAvail = 'wsRecDataAvail' // 可获取录制数据
 
 /**
  * peerConnection 事件

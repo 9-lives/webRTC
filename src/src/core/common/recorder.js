@@ -16,6 +16,7 @@ export class Recorder extends RtcCommon {
 
   /**
    * 设置参数
+   * @return {boolean} true 设置成功; false 设置失败
    */
   setParam (options = {}) {
     let {
@@ -65,6 +66,8 @@ export class Recorder extends RtcCommon {
     this.recorder = new MediaRecorder(this.mediaStream, opt)
     this.duration = duration
     this.timeSlice = timeSlice
+
+    return true
   }
 
   /**
@@ -75,16 +78,23 @@ export class Recorder extends RtcCommon {
       this.recorder.ondataavailable = ret => {
         if (this.ws && this.ws.send) {
           this.ws.send(ret.data)
+        } else {
+          log.e('录制数据发送失败[websocket不存在]')
         }
+
+        this.evtCallBack({
+          evtName: 'wsRecDataAvail',
+          args: [ret.data],
+          codeName: 'WS_REC_FETCHDATAFAILED',
+          errType: 'websocket'
+        })
       }
 
       this.recorder.onstop = ret => {
         log.d('停止录制')
       }
 
-      if (!this[recStart]()) {
-        return false
-      }
+      return this[recStart]()
     } else {
       log.e('录制失败[媒体流未激活]')
       return false

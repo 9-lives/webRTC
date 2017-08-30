@@ -2,35 +2,36 @@ import { getMedia, connect } from '../../constants/methods/index'
 import { Recorder } from '../common/index'
 
 const createConstraints = Symbol('createConstraints')
+const sourceId = Symbol('sourceId')
 
 /**
  * webRTC 录屏
  */
-
 export class Screen extends Recorder {
   constructor (options = {}) {
     super(options)
-    this.sourceId = undefined // 获取屏幕流需要的ID
+    this[sourceId] = undefined // 获取屏幕流需要的ID
     this.timer = undefined // 扩展程序定时器(询问、请求授权)
   }
 
   /**
    * 连接扩展程序获取屏幕sourceId
-   * MDN 建议暂时不用postMessage进行扩展-chrome页面通信，因为发送目标源 '*' 存在安全风险
-   * cTimeout: 连接扩展程序超时时间
-   * pTimeout: 授权超时时间
+   * 发送目标源 '*' 可能存在安全风险
+   * @param {number} aTimeout 连接扩展程序超时时间
+   * @param {number} pTimeout 授权超时时间
+   * @param {promise} 得到sourceId时fulfilled
    */
   connExts (options = {}) {
     let {
       pTimeout = 20000,
-      cTimeout = 5000
+      aTimeout = 5000
     } = options
 
     return new Promise((resolve, reject) => {
       pTimeout = Number.parseInt(pTimeout)
-      cTimeout = Number.parseInt(cTimeout)
-      if (!isNaN(pTimeout) && pTimeout >= 0 && !isNaN(cTimeout) && cTimeout >= 0) {
-        let funs = [] // 存储回调函数
+      aTimeout = Number.parseInt(aTimeout)
+      if (!isNaN(pTimeout) && pTimeout >= 0 && !isNaN(aTimeout) && aTimeout >= 0) {
+        let fs = [] // 存储回调函数
 
         // 询问插件是否存在消息监听函数
         let isExisting = evt => {
@@ -52,30 +53,30 @@ export class Screen extends Recorder {
             let data = evt.data
             if (data === 'permissionDenied') {
               // 拒绝授权
-              remove(funs)
+              remove(fs)
               reject(new Error('录屏授权请求失败'))
             } else if (data === 'permissionTimeout') {
               // 授权超时
-              remove(funs)
+              remove(fs)
               reject(new Error('录屏授权请求超时'))
             } else if (data.sourceId) {
               // 授权通过
-              this.sourceId = data.sourceId
-              remove(funs)
+              this[sourceId] = data.sourceId
+              remove(fs)
               resolve(true)
             }
           }
         }
 
-        funs.push(getSourceId, isExisting)
+        fs.push(getSourceId, isExisting)
         window.addEventListener('message', getSourceId)
         window.addEventListener('message', isExisting)
 
         // 询问
         this.timer = setTimeout(() => {
-          remove(funs)
+          remove(fs)
           reject(new Error('连接扩展程序超时'))
-        }, cTimeout)
+        }, aTimeout)
 
         window.postMessage({
           cmd: 'isExisting'
@@ -86,9 +87,9 @@ export class Screen extends Recorder {
     })
 
     // 移除消息监听
-    function remove (funs) {
-      for (let fun of funs) {
-        window.removeEventListener('message', fun)
+    function remove (fs) {
+      for (let f of fs) {
+        window.removeEventListener('message', f)
       }
     }
   }
@@ -107,7 +108,9 @@ export class Screen extends Recorder {
     this.mediaStream = await super[getMedia](constraints)
 
     // 设置 MediaRecorder 对象参数
-    if (super.setParam(options) === false) return false
+    if (!super.setParam(options)) {
+      return false
+    }
 
     return true
   }
@@ -116,14 +119,9 @@ export class Screen extends Recorder {
    * 录屏(MediaRecorder)
    * chrome 47及以上版本
    */
-  async recScreen (options = {}) {
+  recScreen (options = {}) {
     Object.assign(options, { type: 'screen' })
-    let ret = await super.rec(options)
-    if (ret === false) {
-      return false
-    } else {
-      return ret
-    }
+    return super.rec(options)
   }
 
   /**
@@ -141,7 +139,7 @@ export class Screen extends Recorder {
       video: {
         mandatory: {
           chromeMediaSource: 'desktop',
-          chromeMediaSourceId: this.sourceId,
+          chromeMediaSourceId: this[sourceId],
           maxWidth: maxWidth,
           maxHeight: maxHeight,
           minAspectRatio: minAspectRatio
