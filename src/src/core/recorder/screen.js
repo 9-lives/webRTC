@@ -1,4 +1,4 @@
-import { getMedia, connect } from '../../constants/methods/index'
+import { getMedia } from '../../constants/methods/index'
 import { Recorder } from '../common/index'
 
 const createConstraints = Symbol('createConstraints')
@@ -98,9 +98,6 @@ export class Screen extends Recorder {
    * 初始化
    */
   async start (options = {}) {
-    // 建立 websocket 连接
-    await super[connect]()
-
     // 构造 MediaTrackConstraints
     let constraints = this[createConstraints](options)
 
@@ -108,11 +105,7 @@ export class Screen extends Recorder {
     this.mediaStream = await super[getMedia](constraints)
 
     // 设置 MediaRecorder 对象参数
-    if (!super.setParam(options)) {
-      return false
-    }
-
-    return true
+    return super.setParam(options)
   }
 
   /**

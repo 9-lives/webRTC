@@ -24,9 +24,6 @@ export class MonAnswer extends P2P {
     // PeerConnection 对象初始化
     await super[pConnInit]()
 
-    // 建立 websocket 连接
-    await super[connect]()
-
     return true
   }
 

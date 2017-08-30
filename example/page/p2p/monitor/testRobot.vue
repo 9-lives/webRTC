@@ -1,9 +1,9 @@
 <template>
   <div>
-    <ui-selectlabel :devInfo="devInfo" @chosenA="getMLabel" @chosenV="getVLabel"/>
+    <ui-selectlabel :devInfo="devInfo" @chosenA="getMicLabel" @chosenV="getCamLabel"/>
     <div class="block">
-      <button :disabled="btnClicked" @click="start">开启连接</button>
-      <button :disabled="!btnClicked" @click="close">关闭连接</button>
+      <button :disabled="btnClicked" @click="start">开启监控</button>
+      <button :disabled="!btnClicked" @click="close">关闭监控</button>
     </div>
     <ui-gohome />
   </div>
@@ -25,7 +25,8 @@
         conn: undefined,
         devInfo: {}, // 设备信息
         mLabel: '', // 选中的视频设备标签
-        vLabel: '' // 选中的音频设备标签
+        camLabel: '', // 选中的音频设备标签
+        ws: undefined // websocket[信令通道]
       }
     },
     async created () {
@@ -40,6 +41,7 @@
     },
     beforeDestroy () {
       this.close()
+      this.ws.close()
     },
     methods: {
       async begin () {
@@ -51,32 +53,8 @@
         let evtsPairs = {} // 批量订阅参数
 
         Object.assign(evtsPairs, {
-          wsOpenHandler: () => {
-            this.conn.ws.send(JSON.stringify({
-              cmdId: '1001',
-              robotId: 'ROBOT111',
-              appId: 'offer'
-            }))
-          }
-        })
-
-        Object.assign(evtsPairs, {
-          wsMsgHandler: msg => {
-            let data = JSON.parse(msg.data)
-            if (data.token && data.token === '1005' || data.token === '1007') {
-              data = JSON.parse(data.data)
-              if (data.sdp) {
-                this.conn._rtcP2PRcvSDP(data)
-              } else if (data.candidate) {
-                this.conn._rtcP2PRcvIceCandidate(data)
-              }
-            }
-          }
-        })
-
-        Object.assign(evtsPairs, {
           pLocalSDPReady: sdp => {
-            this.conn.ws.send(JSON.stringify({
+            this.ws.send(JSON.stringify({
               cmdId: '1004',
               robotId: 'ROBOT111',
               sdp
@@ -86,7 +64,7 @@
 
         Object.assign(evtsPairs, {
           pOnIceCandidate: ice => {
-            this.conn.ws.send(JSON.stringify({
+            this.ws.send(JSON.stringify({
               cmdId: '1006',
               robotId: 'ROBOT111',
               candidate: ice
@@ -100,7 +78,7 @@
       },
       close () {
         this.conn.close()
-        this.btnClicked = !(this.btnClicked === true)
+        this.btnClicked = this.btnClicked === false
       },
       errHandler (options = {}) {
         const {
@@ -115,7 +93,7 @@
           case 'peerConnection':
             // p2p 错误
             switch (code) {
-              case errCode.P2P_CONN_ESTABLISH_TIMEOUT:
+              case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
                 log.e('p2p建立连接超时')
                 break
               default:
@@ -125,17 +103,20 @@
         }
       },
       // 选择麦克风标签
-      getMLabel (val) {
-        this.mLabel = val
+      getMicLabel (val) {
+        this.micLabel = val
       },
       // 选择摄像头标签
-      getVLabel (val) {
-        this.vLabel = val
+      getCamLabel (val) {
+        this.camLabel = val
       },
       init () {
+        this.initWs()
+        this.initP2P()
+      },
+      initP2P () {
         try {
           this.conn = new MonOffer({
-            wsIp: webRtcConfig.rmsUrl,
             config: {
               iceServers: [
                 {
@@ -156,15 +137,44 @@
           log.e('p2p 连接初始化失败')
         }
       },
+      initWs () {
+        return new Promise((resolve, reject) => {
+          this.ws = new WebSocket(webRtcConfig.rmsUrl)
+
+          this.ws.onopen = async evt => {
+            if (this.ws.readyState !== 1) {
+              this.ws.close()
+              reject(new Error('websocket[webRTC] 连接建立失败'))
+            } else {
+              log.d('websocket[webRTC] 已连接')
+              this.wsAuthorizaion()
+
+              resolve()
+            }
+          }
+
+          this.ws.onmessage = this.wsMsgHandler
+
+          this.ws.onerror = msg => log.e('websocket[信令通道] 发生错误: ', msg)
+
+          this.ws.onclose = evt => {
+            if (evt.code === 1000) {
+              log.d('websocket[webRTC] 正常关闭')
+            } else {
+              log.e('websocket[webRTC] 异常关闭: ', evt)
+            }
+          }
+        })
+      },
       async start () {
         let ret = await this.conn.start({
           // camera: 0,
           facingMode: 'user',
           // pid: 'b5a7',
           // vid: '04f2',
-          vLabel: this.vLabel,
+          vLabel: this.camLabel,
           // mic: 2,
-          mLabel: this.mLabel,
+          mLabel: this.micLabel,
           frameRate: 10,
           width: 480,
           height: 360
@@ -176,6 +186,29 @@
         }
 
         this.btnClicked = !(this.btnClicked === true)
+      },
+      // 信令通道身份认证
+      wsAuthorizaion () {
+        this.ws.send(JSON.stringify({
+          cmdId: '1001',
+          robotId: 'ROBOT111',
+          appId: 'offer'
+        }))
+      },
+      // 配置p2p连接的 sdp / ice
+      async wsMsgHandler (msg) {
+        let data = JSON.parse(msg.data)
+
+        if (!data.data || data.data === '') {
+          return
+        } else if (data.token && data.token === '1005' || data.token === '1007') {
+          data = JSON.parse(data.data)
+          if (data.sdp) {
+            await this.conn._rtcP2PRcvSDP(data)
+          } else if (data.candidate) {
+            await this.conn._rtcP2PRcvIceCandidate(data)
+          }
+        }
       }
     }
   }

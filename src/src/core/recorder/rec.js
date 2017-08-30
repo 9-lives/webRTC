@@ -1,6 +1,6 @@
 import { judgeType } from '../../utils/index'
 import { Recorder } from '../common/index'
-import { createConstraints, getVideoById, getMedia, connect } from '../../constants/methods/index'
+import { createConstraints, getVideoById, getMedia } from '../../constants/methods/index'
 
 /**
  * webRTC 录像(音频改进)
@@ -18,9 +18,6 @@ export class Rec extends Recorder {
     const {
       videoId // 预览video标签ID, 默认不开启预览
     } = options
-
-    // 建立 websocket 连接
-    await super[connect]()
 
     if (videoId) {
       this.video = super[getVideoById](videoId)
@@ -42,11 +39,7 @@ export class Rec extends Recorder {
     }
 
     // 设置 MediaRecorder 对象参数
-    if (!super.setParam(options)) {
-      return false
-    }
-
-    return true
+    return super.setParam(options)
   }
 
   /**
@@ -55,9 +48,6 @@ export class Rec extends Recorder {
    */
   rec (options = {}) {
     Object.assign(options, { type: 'rec' })
-    let ret = super.rec(options)
-    if (!ret) {
-      return false
-    }
+    return super.rec(options)
   }
 }

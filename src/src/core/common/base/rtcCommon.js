@@ -27,10 +27,6 @@ export class RtcCommon extends Connect(Hook(HtmlEle(Media))) {
       this.canvas = this.mediaStream = this.video = undefined
       log.d('多媒体设备已关闭')
     }
-    // 关闭 websocket 连接
-    if (this.ws && this.ws instanceof WebSocket) {
-      this.ws.close(1000, '终端主动终止连接')
-    }
   }
 }
 

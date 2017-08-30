@@ -1,14 +1,11 @@
 /**
- * 错误代码
+ * p2p 错误代码
  */
-
-/**
- * p2p 错误
- */
+export const P2P_ICECONN_FAILED = -2001 // ice 连接异常关闭
 export const P2P_SDP_LOCAL_GENERATEDFAILED = -2002 // 本地 sdp 生成失败
 export const P2P_SDP_LOCAL_SETFAILED = -2003 // 本地 sdp 设置失败
 export const P2P_SDP_REMOTE_SETFAILED = -2004 // 远程 sdp 设置失败
-export const P2P_CONN_ESTABLISH_TIMEOUT = -2005 // 建立ice连接超时
+export const P2P_ICECONN_ESTABLISH_TIMEOUT = -2005 // 建立ice连接超时
 export const P2P_ICE_ADDFAILED = -2007 // ice candidate 添加失败
 
 /**

@@ -11,4 +11,3 @@ export const isActive = Symbol('isActive') // 检测流状态
 
 // RtcCommon 类
 export const errHandler = Symbol('errHandler') // 错误回调
-export const connect = Symbol('connect') // 连接 websocket

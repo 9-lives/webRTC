@@ -76,16 +76,10 @@ export class Recorder extends RtcCommon {
   rec (options = {}) {
     if (super[isActive]()) {
       this.recorder.ondataavailable = ret => {
-        if (this.ws && this.ws.send) {
-          this.ws.send(ret.data)
-        } else {
-          log.e('录制数据发送失败[websocket不存在]')
-        }
-
         this.evtCallBack({
-          evtName: 'wsRecDataAvail',
+          evtName: 'recDataAvail',
           args: [ret.data],
-          codeName: 'WS_REC_FETCHDATAFAILED',
+          codeName: 'REC_FETCHDATAFAILED',
           errType: 'websocket'
         })
       }

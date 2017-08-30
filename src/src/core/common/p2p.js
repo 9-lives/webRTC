@@ -118,11 +118,9 @@ export class P2P extends RtcCommon {
         case 'failed':
           log.e('p2p ice 连接异常关闭')
 
-          this.evtCallBack({
-            evtName: 'pIceConnFailed',
-            args: [evt],
-            codeName: 'P2P_HOOK_ICE_CONN_FAILED',
-            errType: 'peerConnection'
+          this[errHandler]({
+            type: 'peerConnection',
+            code: errCode.P2P_ICECONN_FAILED
           })
           break
         default:
@@ -238,7 +236,7 @@ export class P2P extends RtcCommon {
     this.p2pConnTimer = setTimeout(() => {
       this[errHandler]({
         type: 'peerConnection',
-        code: errCode.P2P_CONN_ESTABLISH_TIMEOUT
+        code: errCode.P2P_ICECONN_ESTABLISH_TIMEOUT
       })
       this.p2pConnTimer = undefined
     }, webRtcConfig.p2pConnTimeout * 1000)

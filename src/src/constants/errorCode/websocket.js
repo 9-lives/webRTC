@@ -1,17 +1,8 @@
 /**
- * websocket[webRTC] 错误代码
+ *  MediaRecorder 错误代码
  */
 
 /**
- * websocket[webRTC] 错误
+ * MediaRecorder 回调执行出错代码
  */
-export const WS_CONN_ESTABLISHFAILED = -1000 // 连接建立失败
-export const WS_CONN_ERROROCCUR = -1001 // 连接发生错误
-export const WS_CONN_EXCEPTIONALCLOSE = -1002 // 连接异常关闭
-export const WS_REC_FETCHDATAFAILED = -1003 // 获取录制数据回调执行失败
-
-/**
- * websocket[webRTC] 事件回调执行失败
- */
-export const WS_HOOK_CONN_OPEN = -1100 // 连接打开回调执行失败
-export const WS_HOOK_CONN_MSG = -1101 // 消息处理回调执行失败
+export const REC_HOOK_DATAAVAIL = -1100 // 获取录制数据回调执行失败

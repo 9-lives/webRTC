@@ -37,6 +37,7 @@
     },
     beforeDestroy () {
       this.recorder.close()
+      this.ws.close()
     },
     methods: {
       async begin () {

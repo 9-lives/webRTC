@@ -1,8 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
-import { connect, createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
-
-export const wsReconnect = Symbol('wsReconnect')
+import { createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 
 /**
  * webRTC 点对点通信(offerer)
@@ -20,9 +18,6 @@ export class MonOffer extends P2P {
     // PeerConnection 对象初始化
     await super[pConnInit]()
 
-    // 建立 websocket 连接
-    await super[connect]()
-
     // 获取设备ID
     let devIds = await super._rtcGetDevInfo()
 
@@ -36,13 +31,6 @@ export class MonOffer extends P2P {
     this.peerConn.addStream(this.mediaStream)
 
     return true
-  }
-
-  /**
-   * websocket 断线重连
-   */
-  async [wsReconnect] () {
-    await super[connect]()
   }
 
   /**
