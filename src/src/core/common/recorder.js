@@ -1,4 +1,4 @@
-import { RtcCommon } from './index'
+import { RtcBase } from './index'
 import { judgeType, log } from '../../index'
 import { isActive, recStart } from '../../constants/methods/index'
 
@@ -6,7 +6,7 @@ import { isActive, recStart } from '../../constants/methods/index'
    * webRTC recorder 基础类
    * chrome 47及以上版本
    */
-export class Recorder extends RtcCommon {
+export class Recorder extends RtcBase {
   constructor (options) {
     super(options)
     this.recorder = undefined // MediaRecorder 对象
@@ -16,7 +16,7 @@ export class Recorder extends RtcCommon {
 
   /**
    * 设置参数
-   * @return {boolean} true 设置成功; false 设置失败
+   * @returns {boolean} true 设置成功; false 设置失败
    */
   setParam (options = {}) {
     let {

@@ -1,5 +1,5 @@
 import { judgeType, log } from '../../utils/index'
-import { RtcCommon } from '../common/base/index'
+import { RtcBase } from '../common/base/index'
 import { createConstraints, getVideoById, getCanvasById, getMedia, isActive } from '../../constants/methods/index'
 
 /**
@@ -9,7 +9,7 @@ import { createConstraints, getVideoById, getCanvasById, getMedia, isActive } fr
 /**
  * 开启设备
  */
-export class TakePicture extends RtcCommon {
+export class TakePicture extends RtcBase {
   constructor (options = {}) {
     super(options)
   }
@@ -29,14 +29,14 @@ export class TakePicture extends RtcCommon {
       return false
     }
 
-    if (!judgeType('undefined', videoId)) {
-      this.video = super[getVideoById](videoId)
-      if (this.video === false) return false
+    this.video = super[getVideoById](videoId)
+    if (!this.video) {
+      return false
     }
 
-    if (!judgeType('undefined', canvasId)) {
-      this.canvas = super[getCanvasById](canvasId)
-      if (this.canvas === false) return false
+    this.canvas = super[getCanvasById](canvasId)
+    if (!this.canvas) {
+      return false
     }
 
     // 获取设备ID

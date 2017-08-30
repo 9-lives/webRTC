@@ -1,5 +1,5 @@
 import { log } from '../../index'
-import { RtcCommon } from './index'
+import { RtcBase } from './index'
 import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../constants/methods/index'
 import * as errCode from '../../constants/errorCode/index'
 import * as evtNames from '../../constants/eventName'
@@ -12,7 +12,7 @@ const clearP2PConnTimer = Symbol('clearP2PConnTimer') // 复位 p2p 连接超时
  * webRTC peerConnection 基础类
  *  仅兼容chrome 53 及以上版本
  */
-export class P2P extends RtcCommon {
+export class P2P extends RtcBase {
   constructor (options = {}) {
     const {
       config = {}
@@ -234,6 +234,7 @@ export class P2P extends RtcCommon {
   [resetP2PConnTimer] () {
     this[clearP2PConnTimer]()
     this.p2pConnTimer = setTimeout(() => {
+      log.e('p2p建立连接超时')
       this[errHandler]({
         type: 'peerConnection',
         code: errCode.P2P_ICECONN_ESTABLISH_TIMEOUT

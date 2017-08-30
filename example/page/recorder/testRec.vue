@@ -30,7 +30,7 @@
         devInfo: {}, // 设备信息
         micLabel: '', // 选中的视频设备标签
         recorder: undefined,
-        ws: undefined
+        ws: undefined // websocket[录制通道]
       }
     },
     created () {
@@ -43,8 +43,7 @@
     methods: {
       async begin () {
         try {
-          this.init()
-          this.bindEvts()
+          await this.init()
           this.devInfo = await this.recorder._rtcGetDevInfo()
         } catch (err) {
           if (err.message) {
@@ -83,9 +82,10 @@
       getCamLabel (val) {
         this.camLabel = val
       },
-      init () {
+      async init () {
         this.initRec()
-        this.initWs()
+        this.bindEvts()
+        await this.initWs()
       },
       initRec () {
         try {

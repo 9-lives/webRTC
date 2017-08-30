@@ -3,7 +3,7 @@ import { Recorder } from '../common/index'
 import { createConstraints, getVideoById, getMedia } from '../../constants/methods/index'
 
 /**
- * webRTC 录像(音频改进)
+ * webRTC 录像
  */
 
 export class Rec extends Recorder {
@@ -16,12 +16,12 @@ export class Rec extends Recorder {
    */
   async start (options = {}) {
     const {
-      videoId // 预览video标签ID, 默认不开启预览
+      videoId // 预览video标签ID
     } = options
 
     if (videoId) {
       this.video = super[getVideoById](videoId)
-      if (this.video === false) return false
+      if (!this.video) return false
     }
 
     // 获取设备ID

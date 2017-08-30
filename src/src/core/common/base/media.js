@@ -22,11 +22,6 @@ const MediaBase = Base => class MediaBase extends Base {
         stream: this.mediaStream
       })
 
-      if (this.video && !this.video.srcObject) {
-        // 是否需要手动释放?
-        this.video.srcObject = undefined
-      }
-
       this.canvas = this.mediaStream = this.video = undefined
       log.d('多媒体设备已关闭')
     }
@@ -125,7 +120,7 @@ const MediaBase = Base => class MediaBase extends Base {
     * 获取流媒体
     * @param {object} audio 音频轨约束
     * @param {object} video 视频轨约束
-    * @return {object} 流媒体
+    * @returns {object} 流媒体
     */
   async [getMedia] ({ audio = false, video = false }) {
     let media
@@ -154,7 +149,7 @@ const MediaBase = Base => class MediaBase extends Base {
 
   /**
    * 检测流状态
-   * @return {boolean} 激活状态 true，终止状态 false
+   * @returns {boolean} 激活状态 true，终止状态 false
    */
   [isActive] () {
     if (this.mediaStream instanceof MediaStream) {

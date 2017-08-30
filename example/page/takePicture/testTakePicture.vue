@@ -4,26 +4,33 @@
       <video id="tpaaa" width=400 height=300 autoplay></video>
       <canvas id="tpccc" width=400 height=300 ></canvas>
     </div>
+    <ui-selectlabel :devInfo="devInfo" :micShow="false" @chosenV="getCamLabel"/>
     <div class="block">
-      <button @click="preview">预览</button>
+      <button :disabled="btnClicked" @click="preview">预览</button>
+      <button :disabled="!btnClicked" @click="stopPreview">关闭预览</button>
       <button @click="takePicture">拍照</button>
     </div>
-    <div class="block">
-      <button @click="$router.push({ name: 'home' })">返回主页</button>
-    </div>
+    <ui-gohome />
   </div>
 </template>
 <script>
+  import { selectLabel, goHome } from '@/components/ui/index'
   import { TakePicture } from 'webRTC/src/core/index'
   import { log } from 'webRTC/src/utils/index'
   export default {
+    components: {
+      'ui-gohome': goHome,
+      'ui-selectlabel': selectLabel
+    },
     data () {
       return {
-        tp: undefined,
-        url: undefined
+        btnClicked: false,
+        camLabel: '', // 选中的音频设备标签
+        devInfo: {}, // 设备信息
+        tp: undefined
       }
     },
-    mounted () {
+    created () {
       this.begin()
     },
     beforeDestroy () {
@@ -33,8 +40,7 @@
       async begin () {
         try {
           this.init()
-          this.bindEvts()
-          await this.start()
+          this.devInfo = await this.tp._rtcGetDevInfo()
         } catch (err) {
           if (err.message) {
             log.e(err.message)
@@ -42,43 +48,40 @@
           log.e('视频设备开启失败')
         }
       },
-      bindEvts () {
-        let evtPairs = {} // 批量订阅参数
-
-        Object.assign(evtPairs, {errHandler: this.errHandler})
-
-        this.tp._rtcEvtsSubscribe({ pairs: evtPairs })
+      // 选择摄像头标签
+      getCamLabel (val) {
+        this.camLabel = val
       },
       init () {
         this.tp = new TakePicture()
       },
-      preview () {
-        document.querySelector('#tpaaa').play()
-      },
-      async start () {
+      async preview () {
         let ret = await this.tp.start({
-          camera: 0,
+          // camera: 0,
           canvasId: 'tpccc',
-          videoId: 'tpaaa'
+          facingMode: 'user', // 视频轨方向
+          // pid: '0401',
+          // vid: '5986',
+          videoId: 'tpaaa',
+          vLabel: this.camLabel
         })
         if (ret === true) {
           log.d('视频设备已打开')
         } else {
           log.e('视频设备开启失败')
         }
+
+        this.btnClicked = !(this.btnClicked === true)
       },
-      async takePicture () {
-        try {
-          await this.tp.takePicture({
-            w: 400,
-            h: 300
-          })
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
-          }
-          log.e('拍照失败')
-        }
+      stopPreview () {
+        this.tp.close()
+        this.btnClicked = !(this.btnClicked === true)
+      },
+      takePicture () {
+        this.tp.takePicture({
+          w: 400,
+          h: 300
+        })
       }
     }
   }

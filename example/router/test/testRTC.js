@@ -6,8 +6,8 @@ const home = resolve => require(['@/page/home'], resolve)
 const testRec = resolve => require(['@/page/recorder/testRec'], resolve)
 const testScreen = resolve => require(['@/page/recorder/testScreen'], resolve)
 const testTakePicture = resolve => require(['@/page/takePicture/testTakePicture'], resolve)
-const testRobot = resolve => require(['@/page/p2p/monitor/testRobot'], resolve)
-const testReceiver = resolve => require(['@/page/p2p/monitor/testReceiver'], resolve)
+const testOffer = resolve => require(['@/page/p2p/monitor/testOffer'], resolve)
+const testAnswer = resolve => require(['@/page/p2p/monitor/testAnswer'], resolve)
 
 const testRTC = [
   {
@@ -31,14 +31,14 @@ const testRTC = [
     component: testTakePicture
   },
   {
-    path: '/robot',
-    name: 'robot',
-    component: testRobot
+    path: '/offer',
+    name: 'offer',
+    component: testOffer
   },
   {
-    path: '/receiver',
-    name: 'receiver',
-    component: testReceiver
+    path: '/answer',
+    name: 'answer',
+    component: testAnswer
   }
 ]
 

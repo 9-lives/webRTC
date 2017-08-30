@@ -152,7 +152,7 @@ export class Device {
 /**
   * 使用多媒体设备信息标签解析 vid 和 pid
   * @param {number} label：视频轨的标签, 例如格式: Bison cam, NB Pro(5986:0706)
-  * @return {object} 小写 vid、pid 信息对象
+  * @returns {object} 小写 vid、pid 信息对象
   */
 function analysisVidPid (label) {
   // vid、pid均只有2个字节，16进制表示，即4个十六进制字符
@@ -175,7 +175,7 @@ function analysisVidPid (label) {
 /**
   * 设备信息过滤器
   * @param {array} originalInfo 原始设备信息
-  * @return {object} 过滤的设备信息数组
+  * @returns {object} 过滤的设备信息数组
   */
 function devfilter ({ originalInfo = [] }) {
   let devInfo = {
@@ -207,7 +207,7 @@ function devfilter ({ originalInfo = [] }) {
 
 /**
   * 枚举多媒体IO设备信息
-  * @return {array} 多媒体IO设备原始信息
+  * @returns {array} 多媒体IO设备原始信息
   */
 async function enumerateDevs () {
   let originalInfo
@@ -225,9 +225,9 @@ async function enumerateDevs () {
 
 /**
   * 通过设备序号查找音频设备ID
-  * @param {object} devIds
+  * @param {object} devIds 设备信息
   * @param {number} mic
-  * @return {string} 音频设备ID
+  * @returns {string} 音频设备ID
   */
 function getADevIdByNo ({ devIds = {}, mic = 0 }) {
   log.i(`指定音频设备序号 ${mic}`)
@@ -243,9 +243,9 @@ function getADevIdByNo ({ devIds = {}, mic = 0 }) {
 
 /**
   * 通过标签查找音频设备ID
-  * @param {object} devIds
+  * @param {object} devIds 设备信息
   * @param {string} mLabel
-  * @return {string} 音频设备ID
+  * @returns {string} 音频设备ID
   */
 function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
   log.i(`指定音频设备标签 label = ${mLabel}`)
@@ -264,9 +264,9 @@ function getADevIdByLabel ({ devIds = {}, mLabel = '' }) {
 
 /**
   * 通过设备标签查找视频设备ID
+  * @param {object} devIds 设备信息
   * @param {number} vLabel
-  * @param {object} devIds
-  * @return {string} 视频设备ID
+  * @returns {string} 视频设备ID
   */
 function getVDevIdByLabel ({vLabel, devIds}) {
   log.i(`指定视频设备标签 label = ${vLabel}`)
@@ -285,9 +285,10 @@ function getVDevIdByLabel ({vLabel, devIds}) {
 
 /**
   * 通过视频设备 vid、pid 对查找设备ID
+  * @param {object} 设备信息
   * @param {string} pid
   * @param {string} vid
-  * @return {string} 视频设备ID
+  * @returns {string} 视频设备ID
   */
 function getVDevIdByIDPair ({ devIds = {}, pid = '', vid = '' }) {
   log.i(`指定摄像头 vid = ${vid}, pid = ${pid}`)
@@ -308,8 +309,8 @@ function getVDevIdByIDPair ({ devIds = {}, pid = '', vid = '' }) {
   * 通过设备序号查找视频设备ID
   * @param {number} camera 摄像头序号
   * @param {object} facingMode 视频源指向
-  * @param {object} devIds 硬件设备IDs
-  * @return {string} 视频设备ID
+  * @param {object} devIds 设备信息
+  * @returns {string} 视频设备ID
   */
 function getVDevIdByNo (options = {}) {
   let {

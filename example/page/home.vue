@@ -13,8 +13,8 @@
     </div>
     <div class="block">
       <p>-------p2p-------</p>
-      <button @click="go('robot')">被监控页</button>
-      <button @click="go('receiver')">监控页</button>
+      <button @click="go('offer')">被监控页</button>
+      <button @click="go('answer')">监控页</button>
     </div>
   </div>
 </template>

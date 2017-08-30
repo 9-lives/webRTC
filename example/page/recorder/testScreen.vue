@@ -22,10 +22,10 @@
     data () {
       return {
         screen: undefined,
-        ws: undefined // websocket 录制通道
+        ws: undefined // websocket[录制通道]
       }
     },
-    mounted () {
+    created () {
       this.begin()
     },
     beforeDestroy () {
@@ -67,9 +67,11 @@
       errHandler (options = {}) {
         const {
           type,
-          value
+          value,
+          code
         } = options
 
+        log.e(`错误代码: ${code}`)
         switch (type) {
           case 'mediaRecorder':
             // websocket 错误

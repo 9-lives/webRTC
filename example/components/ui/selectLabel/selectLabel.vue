@@ -7,7 +7,7 @@
         <option :value="undefined">禁用标签选择</option>
       </select>
     </div>
-    <div class="label">
+    <div v-if="micShow" class="label">
       <label for="selectV">选择音频设备标签</label>
       <select id="selectV" v-model="chosenA">
         <option v-for="aDev of devInfo.audio" :key="aDev.id" :value="aDev.label">{{aDev.label}}</option>
@@ -24,6 +24,10 @@ export default {
     devInfo: {
       type: Object,
       default: () => {}
+    },
+    micShow: {
+      type: Boolean,
+      default: true
     }
   },
   data () {
@@ -39,11 +43,6 @@ export default {
     chosenV: function (val) {
       this.$emit('chosenV', val)
     }
-  },
-  mounted () {
-  },
-  methods: {
-
   }
 }
 </script>

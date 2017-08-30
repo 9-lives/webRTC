@@ -1,4 +1,4 @@
-import { log } from '../../../index'
+import { judgeType, log } from '../../../index'
 import { Media } from './index'
 import { getVideoById, getCanvasById } from '../../../constants/methods/index'
 
@@ -14,21 +14,22 @@ export const HtmlElement = Base => class HtmlEle extends Base {
   }
 
   /**
-    * 获取video元素
-    * videoId: DOM元素ID
+    * 查找video元素
+    * @param {string} videoId: video元素的ID
+    * @returns {object || boolean} 查找成功返回指定元素，查找失败返回 false
     */
   [getVideoById] (videoId) {
     let videoEle
-    try {
-      videoEle = document.getElementById(videoId.toString())
-    } catch (err) {
-      if (err.message) {
-        log.e(err.message)
-      }
+
+    if (!judgeType('string', videoId)) {
+      log.e('查找 video 元素失败[参数错误]')
+      return false
     }
 
+    videoEle = document.getElementById(videoId)
+
     if (!videoEle || videoEle.tagName.toLowerCase() !== 'video') {
-      log.e('未找到video元素')
+      log.e('未找到 video 元素')
       return false
     } else {
       return videoEle
@@ -36,18 +37,19 @@ export const HtmlElement = Base => class HtmlEle extends Base {
   }
 
   /**
-    * 获取canvas元素
-    * canvasId: DOM元素ID
+    * 查找canvas元素
+    * @param {string} canvasId: canvas元素的ID
+    * @returns {object || boolean} 查找成功返回指定元素，查找失败返回 false
     */
   [getCanvasById] (canvasId) {
     let canvasEle
-    try {
-      canvasEle = document.getElementById(canvasId)
-    } catch (err) {
-      if (err.message) {
-        log.e(err.message)
-      }
+
+    if (!judgeType('string', canvasId)) {
+      log.e('查找 canvas 元素失败[参数错误]')
+      return false
     }
+
+    canvasEle = document.getElementById(canvasId)
 
     if (!canvasEle || canvasEle.tagName.toLowerCase() !== 'canvas') {
       log.e('拍照失败[未找到canvas元素]')
