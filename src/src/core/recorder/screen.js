@@ -1,5 +1,6 @@
 import { getMedia } from '../../constants/methods/index'
 import { Recorder } from '../common/index'
+import { log, judgeType } from '../../utils/index'
 
 const createConstraints = Symbol('createConstraints')
 const sourceId = Symbol('sourceId')
@@ -17,73 +18,78 @@ export class Screen extends Recorder {
   /**
    * 连接扩展程序获取屏幕sourceId
    * 发送目标源 '*' 可能存在安全风险
-   * @param {number} aTimeout 连接扩展程序超时时间
-   * @param {number} pTimeout 授权超时时间
-   * @param {promise} 得到sourceId时fulfilled
+   * @param {number} cTimeout 连接扩展程序超时时间(秒)
+   * @param {number} aTimeout 授权超时时间(秒)
+   * @returns {promise} promise在得到sourceId时fulfilled
    */
-  connExts (options = {}) {
-    let {
-      pTimeout = 20000,
-      aTimeout = 5000
-    } = options
-
+  connExts ({ cTimeout = 5, aTimeout = 15 }) {
     return new Promise((resolve, reject) => {
-      pTimeout = Number.parseInt(pTimeout)
-      aTimeout = Number.parseInt(aTimeout)
-      if (!isNaN(pTimeout) && pTimeout >= 0 && !isNaN(aTimeout) && aTimeout >= 0) {
-        let fs = [] // 存储回调函数
-
-        // 询问插件是否存在消息监听函数
-        let isExisting = evt => {
-          if (evt.origin === window.location.origin) {
-            let data = evt.data
-            if (data === 'true') {
-              clearTimeout(this.timer)
-              window.postMessage({
-                cmd: 'getSourceId',
-                pTimeout: pTimeout
-              }, '*')
-            }
-          }
-        }
-
-        // 获取 sourceId 消息监听函数
-        let getSourceId = evt => {
-          if (evt.origin === window.location.origin) {
-            let data = evt.data
-            if (data === 'permissionDenied') {
-              // 拒绝授权
-              remove(fs)
-              reject(new Error('录屏授权请求失败'))
-            } else if (data === 'permissionTimeout') {
-              // 授权超时
-              remove(fs)
-              reject(new Error('录屏授权请求超时'))
-            } else if (data.sourceId) {
-              // 授权通过
-              this[sourceId] = data.sourceId
-              remove(fs)
-              resolve(true)
-            }
-          }
-        }
-
-        fs.push(getSourceId, isExisting)
-        window.addEventListener('message', getSourceId)
-        window.addEventListener('message', isExisting)
-
-        // 询问
-        this.timer = setTimeout(() => {
-          remove(fs)
-          reject(new Error('连接扩展程序超时'))
-        }, aTimeout)
-
-        window.postMessage({
-          cmd: 'isExisting'
-        }, '*')
-      } else {
+      if (!(judgeType('number', cTimeout, aTimeout) && aTimeout > 0 && cTimeout > 0)) {
         reject(new Error('连接扩展程序失败[参数错误]'))
+        return
       }
+
+      let fs = [] // 存储回调函数
+
+      // 询问插件是否存在消息监听函数
+      let isExisting = evt => {
+        if (evt.origin === window.location.origin) {
+          let data = evt.data
+          if (data === 'true') {
+            clearTimeout(this.timer)
+            window.postMessage({
+              cmd: 'getSourceId',
+              aTimeout
+            }, '*')
+          }
+        }
+      }
+
+      // 获取 sourceId 消息监听函数
+      let getSourceId = evt => {
+        if (evt.origin === window.location.origin) {
+          let data = evt.data
+
+          if (data.status && data.type === 'permission') {
+            // 授权成功
+            this[sourceId] = data.msg
+            resolve(true)
+            remove(fs)
+          } else if (data.status === false) {
+            log.e(data.msg)
+
+            switch (data.type) {
+              case 'permissionDenied':
+                // 拒绝授权
+                reject(new Error('录屏授权请求被拒绝'))
+                break
+              case 'permissionError':
+                // 授权错误
+                reject(new Error('录屏授权请求失败'))
+                break
+              case 'permissionTimeout':
+                // 授权超时
+                reject(new Error('录屏授权请求超时'))
+                break
+            }
+            remove(fs)
+          }
+        }
+      }
+
+      fs.push(getSourceId, isExisting)
+      window.addEventListener('message', getSourceId)
+      window.addEventListener('message', isExisting)
+
+      // 询问
+      this.timer = setTimeout(() => {
+        remove(fs)
+        reject(new Error('连接扩展程序超时'))
+      }, cTimeout * 1000)
+
+      window.postMessage({
+        cmd: 'isExisting'
+      }, '*')
     })
 
     // 移除消息监听

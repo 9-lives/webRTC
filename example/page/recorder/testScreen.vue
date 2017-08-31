@@ -42,7 +42,6 @@
           if (err.message) {
             log.e(err.message)
           }
-          log.e('录屏开启失败')
         }
       },
       bindEvts () {
@@ -55,13 +54,13 @@
       // 连接扩展程序
       async connExts () {
         let ret = await this.screen.connExts({
-          cTimeout: 5000,
-          aTimeout: 15000
+          cTimeout: 5,
+          aTimeout: 15
         })
         if (ret === true) {
           log.d('sourceId 获取成功')
         } else {
-          log.e('用户拒绝授权')
+          // TODO 授权失败处理
         }
       },
       errHandler (options = {}) {
@@ -143,7 +142,7 @@
         if (ret === true) {
           log.d('录屏初始化完毕')
         } else {
-          log.e('录屏开启失败')
+          // TODO 启动录屏失败处理
         }
       },
       stop () {

@@ -1,7 +1,8 @@
 ﻿// 连接扩展程序
 let port = chrome.runtime.connect({name: 'desktopCapture'})
 port.onMessage.addListener(message => {
-  // 将背景js获取的 sourceId 传递给前端页面
+  // 将背景js的消息传递给前端页面
+  console.log('来自背景页面：', message)
   window.postMessage(message, '*')
 })
 

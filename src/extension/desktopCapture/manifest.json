@@ -1,7 +1,7 @@
 {
   "name": "Get Sourceid",
   "author": "9-lives <911120823@qq.com.cn>",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "manifest_version": 2,
   "minimum_chrome_version": "34",
   "description": "This chrome extension is used for getting screen's SourceId",
