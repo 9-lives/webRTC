@@ -18,19 +18,8 @@ chrome.runtime.onConnect.addListener(port => {
       })
     }
 
-    // 设置授权超时计时器
-    let timer = setTimeout(() => {
-      timer = undefined
-      // chrome.windows.remove(win.id)
-
-      return port.postMessage({
-        status: false,
-        type: 'permissionTimeout',
-        msg: '[Get SourceId] 获取 sourceId 失败[请求授权超时]'
-      })
-    }, timeout * 1000)
-
-    chrome.desktopCapture.chooseDesktopMedia(['screen'], port.sender.tab, sourceId => {
+    // 获取 sourceId
+    let winId = chrome.desktopCapture.chooseDesktopMedia(['screen'], port.sender.tab, sourceId => {
       if (typeof timer !== 'undefined') {
         // 清除授权超时计时器
         clearTimeout(timer)
@@ -53,5 +42,19 @@ chrome.runtime.onConnect.addListener(port => {
         })
       }
     })
+
+    // 设置授权超时计时器
+    let timer = setTimeout(() => {
+      timer = undefined
+
+      // 隐藏选择捕获屏幕的窗口
+      chrome.desktopCapture.cancelChooseDesktopMedia(winId)
+
+      return port.postMessage({
+        status: false,
+        type: 'permissionTimeout',
+        msg: '[Get SourceId] 获取 sourceId 失败[请求授权超时]'
+      })
+    }, timeout * 1000)
   })
 })

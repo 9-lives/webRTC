@@ -55,7 +55,7 @@
       async connExts () {
         let ret = await this.screen.connExts({
           cTimeout: 5,
-          aTimeout: 15
+          aTimeout: 5
         })
         if (ret === true) {
           log.d('sourceId 获取成功')
