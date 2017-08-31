@@ -11,7 +11,8 @@ export const errHandler = 'errHandler'
  * 录制事件
  */
 export const recDataAvail = 'recDataAvail' // 可获取录制数据
-export const recClosed = 'recClosed' // 连接已正常关闭
+export const recClosed = 'recClosed' // 录制连接已正常关闭
+export const recStop = 'recStop' // 停止录制
 
 /**
  * p2p 事件

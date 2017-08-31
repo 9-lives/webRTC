@@ -1,6 +1,6 @@
 import { RtcBase } from './index'
 import { judgeType, log } from '../../index'
-import { isActive, recStart } from '../../constants/methods/index'
+import { isActive, recStart, setParam } from '../../constants/methods/index'
 
   /**
    * webRTC recorder 基础类
@@ -10,68 +10,40 @@ export class Recorder extends RtcBase {
   constructor (options) {
     super(options)
     this.recorder = undefined // MediaRecorder 对象
-    this.duration = 0 // // 录制时长, 默认 0 手动停止
-    this.timeSlice = 0 // 时间片, 默认 0 不分片
   }
 
   /**
    * 设置参数
+   * @param {object} options 录制器初始化参数
    * @returns {boolean} true 设置成功; false 设置失败
    */
-  setParam (options = {}) {
+  [setParam] (options = {}) {
     let {
-      type, // 录制类型： 'rec' 录像录音； 'screen' 录屏
       audioBitsPerSecond = 128000, // 音频比特率，录屏时不传值
       videoBitsPerSecond = 640000, // 视频比特率
-      mimeType = 'video/webm', // 多用途互联网邮件扩展
-      duration = 0, // 录制时长, 默认 0 手动停止
-      timeSlice = 0 // 时间片, 默认 0 不分片
+      mimeType = 'video/webm' // 多用途互联网邮件扩展
     } = options
-
-    duration = Number.parseInt(duration)
-    if (isNaN(duration) || duration < 0) {
-      log.e('录像参数错误[录制时长]')
-      return false
-    }
-
-    timeSlice = Number.parseInt(timeSlice)
-    if (isNaN(timeSlice) || timeSlice < 0) {
-      log.e('录像参数错误[时间片]')
-      return false
-    }
-
-    let opt = {}
-    if (judgeType('string', type)) {
-      switch (type) {
-        case 'rec':
-          Object.assign(opt, audioBitsPerSecond)
-          break
-        case 'screen':
-          break
-        default:
-          log.e('recorder 初始化失败[未知的录制类型]')
-          return false
-      }
-    }
-    Object.assign(opt, {
-      videoBitsPerSecond: videoBitsPerSecond,
-      mimeType: mimeType
-    })
 
     if (!window.MediaRecorder) {
       log.e('recorder 初始化失败[MediaRecorder API 不存在]，请更换或升级浏览器')
       return false
     }
 
+    let opt = {
+      audioBitsPerSecond,
+      videoBitsPerSecond,
+      mimeType
+    }
+
     this.recorder = new MediaRecorder(this.mediaStream, opt)
-    this.duration = duration
-    this.timeSlice = timeSlice
 
     return true
   }
 
   /**
    * 录像
+   * @param {object} options 录制参数
+   * @returns {boolean} 启动录制成功 true；失败 false
    */
   rec (options = {}) {
     if (super[isActive]()) {
@@ -79,16 +51,22 @@ export class Recorder extends RtcBase {
         this.evtCallBack({
           evtName: 'recDataAvail',
           args: [ret.data],
-          codeName: 'REC_FETCHDATAFAILED',
+          codeName: 'REC_HOOK_DATAAVAIL',
           errType: 'mediaRecorder'
         })
       }
 
       this.recorder.onstop = ret => {
         log.d('停止录制')
+
+        this.evtCallBack({
+          evtName: 'recStop',
+          codeName: 'REC_HOOK_STOP',
+          errType: 'mediaRecorder'
+        })
       }
 
-      return this[recStart]()
+      return this[recStart](options)
     } else {
       log.e('录制失败[媒体流未激活]')
       return false
@@ -97,24 +75,34 @@ export class Recorder extends RtcBase {
 
   /**
    * 开始录制
+   * @param duration 录制时长(秒), 默认 0 需手动终止
+   * @param timeSlice 时间片大小(秒)， 默认 0 不分片
+   * @returns {boolean} 启动录制成功 true；失败 false
    */
-  [recStart] () {
+  [recStart] ({ duration = 0, timeSlice = 0 }) {
+    if (!(judgeType('number', duration, timeSlice) && duration > 0 && timeSlice > 0)) {
+      log.e('录像初始化失败[录像参数错误]')
+      return false
+    }
+
     if (this.recorder.state !== 'recording') {
       log.d('开始录制')
-      if (this.timeSlice === 0) {
+      if (timeSlice === 0) {
+        // 不分片
         this.recorder.start()
       } else {
-        this.recorder.start(this.timeSlice)
+        this.recorder.start(timeSlice * 1000)
       }
     } else {
       log.e('开启录制失败[已经处于录制状态]')
       return false
     }
 
-    if (this.duration !== 0) {
+    if (duration !== 0) {
+      // 有限时长
       setTimeout(() => {
         this.recStop()
-      }, this.duration)
+      }, duration * 1000)
     }
 
     return true

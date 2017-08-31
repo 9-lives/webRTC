@@ -1,4 +1,4 @@
-import { getMedia } from '../../constants/methods/index'
+import { getMedia, setParam } from '../../constants/methods/index'
 import { Recorder } from '../common/index'
 import { log, judgeType } from '../../utils/index'
 
@@ -111,16 +111,7 @@ export class Screen extends Recorder {
     this.mediaStream = await super[getMedia](constraints)
 
     // 设置 MediaRecorder 对象参数
-    return super.setParam(options)
-  }
-
-  /**
-   * 录屏(MediaRecorder)
-   * chrome 47及以上版本
-   */
-  recScreen (options = {}) {
-    Object.assign(options, { type: 'screen' })
-    return super.rec(options)
+    return super[setParam](options)
   }
 
   /**

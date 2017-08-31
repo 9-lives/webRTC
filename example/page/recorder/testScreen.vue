@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="block">
-      <video id="screenaaa" width=400 height=300 ></video>
+      <video id="screen" width=400 height=300 ref="screen" autoplay></video>
     </div>
     <div class="block">
-      <button @click="recScreen">录屏</button>
+      <button @click="rec">录屏</button>
       <button @click="stop">停止</button>
     </div>
     <ui-gohome />
@@ -21,7 +21,9 @@
     },
     data () {
       return {
+        blobArr: [], // 存储录制数据
         screen: undefined,
+        url: undefined, // 本地预览 url
         ws: undefined // websocket[录制通道]
       }
     },
@@ -31,6 +33,7 @@
     beforeDestroy () {
       this.screen.close()
       this.ws.close()
+      this.revokeURL()
     },
     methods: {
       async begin () {
@@ -44,42 +47,34 @@
           }
         }
       },
-      bindEvts () {
+      evtsSubscribe () {
         let evtPairs = {} // 批量订阅参数
 
-        Object.assign(evtPairs, {errHandler: this.errHandler})
+        Object.assign(evtPairs, { errHandler: this.errHandler })
+        Object.assign(evtPairs, { recDataAvail: this.recDataAvailCallBack })
+        Object.assign(evtPairs, { recStop: this.recStopCallBack })
 
         this.screen._rtcEvtsSubscribe({ pairs: evtPairs })
       },
       // 连接扩展程序
       async connExts () {
         let ret = await this.screen.connExts({
-          cTimeout: 5,
-          aTimeout: 5
+          cTimeout: 5, // 连接扩展超时时间(秒)
+          aTimeout: 15 // 请求授权超时时间(秒)
         })
+
         if (ret === true) {
           log.d('sourceId 获取成功')
-        } else {
-          // TODO 授权失败处理
         }
       },
-      errHandler (options = {}) {
-        const {
-          type,
-          value,
-          code
-        } = options
-
-        log.e(`错误代码: ${code}`)
-        switch (type) {
-          case 'mediaRecorder':
-            // websocket 错误
-            break
+      errHandler ({ code, type, value }) {
+        if (type === 'mediaRecorder') {
+          // 处理录制错误
         }
       },
       async init () {
-        this.initRec()
-        this.bindEvts()
+        this.screen = new Screen()
+        this.evtsSubscribe()
         await this.initWs()
       },
       initWs () {
@@ -92,38 +87,27 @@
               reject(new Error('websocket[录制通道] 连接建立失败'))
             } else {
               log.d('websocket[录制通道] 已连接')
-              // TODO 身份认证
               resolve()
             }
           }
 
-          this.ws.onmessage = () => {}
-
-          this.ws.onerror = msg => {
-            log.e('websocket[录制通道] 发生错误: ', msg)
-          }
-
-          this.ws.onclose = evt => {
-            if (evt.code === 1000) {
-              log.d('websocket[录制通道] 正常关闭')
-            } else {
-              log.e('websocket[录制通道] 异常关闭: ', evt)
-            }
-          }
+          this.ws.onerror = msg => log.e('websocket[录制通道] 发生错误: ', msg)
+          this.ws.onclose = evt => log.d('websocket[录制通道] 正常关闭')
         })
       },
-      initRec () {
-        this.screen = new Screen()
-      },
-      play () {
-        document.querySelector('#screenaaa').play()
+      // 获取录制数据
+      recDataAvailCallBack (data) {
+        this.blobArr.push(data)
       },
       // 录屏
-      recScreen () {
+      rec () {
         try {
-          let ret = this.screen.recScreen()
+          let ret = this.screen.rec({
+            duration: 6, // 录制时长
+            timeSlice: 3 // 时间片大小
+          })
 
-          if (ret === false) {
+          if (ret !== true) {
             // TODO 录屏失败处理
           }
         } catch (err) {
@@ -132,11 +116,31 @@
           }
         }
       },
+      // 本地预览录制的视频
+      recStopCallBack () {
+        let blob = new Blob(this.blobArr)
+        this.blobArr = []
+
+        // 释放先前的URL
+        this.revokeURL()
+        this.url = window.URL.createObjectURL(blob)
+
+        if (this.$refs.screen) {
+          // 未录制完成close可能导致报错
+          this.$refs.screen.src = this.url
+        }
+      },
+      // 释放预览文件的URL
+      revokeURL () {
+        if (this.url) {
+          window.URL.revokeObjectURL(this.url)
+          this.url = undefined
+        }
+      },
+      // 准备录制
       async start () {
         let ret = await this.screen.start({
-          videoId: 'aaa',
-          duration: 6000,
-          timeSlice: 3000
+          videoId: 'screen'
         })
 
         if (ret === true) {
@@ -145,6 +149,7 @@
           // TODO 启动录屏失败处理
         }
       },
+      // 停止录制
       stop () {
         this.screen.recStop()
       }

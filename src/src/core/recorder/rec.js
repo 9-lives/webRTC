@@ -1,6 +1,6 @@
 import { judgeType } from '../../utils/index'
 import { Recorder } from '../common/index'
-import { createConstraints, getVideoById, getMedia } from '../../constants/methods/index'
+import { createConstraints, getVideoById, getMedia, setParam } from '../../constants/methods/index'
 
 /**
  * webRTC 录像
@@ -42,15 +42,6 @@ export class Rec extends Recorder {
     }
 
     // 设置 MediaRecorder 对象参数
-    return super.setParam(options)
-  }
-
-  /**
-   * 录像(MediaRecorder)
-   * chrome 47及以上版本
-   */
-  rec (options = {}) {
-    Object.assign(options, { type: 'rec' })
-    return super.rec(options)
+    return super[setParam](options)
   }
 }

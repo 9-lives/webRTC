@@ -4,3 +4,4 @@
 
 // recorder 类
 export const recStart = Symbol('recStart') // 开始录制
+export const setParam = Symbol('setParam') // 设置参数
