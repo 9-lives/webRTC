@@ -28,7 +28,10 @@ export class Rec extends Recorder {
     let devInfo = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
-    let constraints = super[createConstraints](options, devInfo)
+    let constraints = super[createConstraints]({
+      options,
+      devInfo
+    })
 
     // 获取媒体流
     this.mediaStream = await super[getMedia](constraints)

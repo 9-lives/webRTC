@@ -43,15 +43,16 @@ export class TakePicture extends RtcBase {
     let devInfo = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
-    let constraints = super[createConstraints](options, devInfo)
+    let constraints = super[createConstraints]({
+      options,
+      devInfo
+    })
 
     // 获取媒体流
     this.mediaStream = await super[getMedia](constraints)
 
     // video 标签绑定流媒体
-    if (!judgeType('undefined', videoId)) {
-      this.video.srcObject = this.mediaStream
-    }
+    this.video.srcObject = this.mediaStream
 
     return true
   }

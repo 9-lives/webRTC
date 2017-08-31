@@ -38,10 +38,9 @@ export class Device {
   /**
     * 取视频设备ID
     */
-  [getVDevId] (options = {}) {
+  [getVDevId] ({ options = {}, devInfo }) {
     const {
       camNo, // 摄像头序号
-      devInfo, // 硬件ID
       facingMode, // 视频源方向
       pid, // 摄像头pid
       vid, // 摄像头vid
@@ -106,11 +105,10 @@ export class Device {
   /**
     * 取音频设备ID
     */
-  [getADevId] (options = {}) {
+  [getADevId] ({ options = {}, devInfo }) {
     const {
       micNo, // 麦克风序号
-      mLabel, // 麦克风标签
-      devInfo = {} // 硬件ID
+      mLabel // 麦克风标签
     } = options
 
     let aDevId

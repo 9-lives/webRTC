@@ -78,10 +78,14 @@
         this.btnClicked = !(this.btnClicked === true)
       },
       takePicture () {
-        this.tp.takePicture({
-          w: 400,
-          h: 300
+        let ret = this.tp.takePicture({
+          w: 400, // 照片宽度
+          h: 300 // 照片高度
         })
+
+        if (ret !== true) {
+          // TODO 拍照失败处理
+        }
       }
     }
   }

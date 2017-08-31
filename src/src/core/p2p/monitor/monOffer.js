@@ -1,6 +1,7 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
 import { createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
+import * as errCode from '../../../constants/errorCode/index'
 
 /**
  * webRTC 点对点通信(offerer)
@@ -22,7 +23,10 @@ export class MonOffer extends P2P {
     let devInfo = await super._rtcGetDevInfo()
 
     // 构造 MediaTrackConstraints
-    let constraints = super[createConstraints](options, devInfo)
+    let constraints = super[createConstraints]({
+      options,
+      devInfo
+    })
 
     // 获取媒体流
     this.mediaStream = await super[getMedia](constraints)
@@ -58,7 +62,7 @@ export class MonOffer extends P2P {
 
         this[errHandler]({
           type: 'peerConnection',
-          code: -2004
+          code: errCode.P2P_SDP_REMOTE_SETFAILED
         })
       }
 
@@ -90,7 +94,7 @@ export class MonOffer extends P2P {
         await this[errHandler]({
           type: 'peerConnection',
           err,
-          code: -2006
+          code: errCode.P2P_ICE_ADDFAILED
         })
       }
 
