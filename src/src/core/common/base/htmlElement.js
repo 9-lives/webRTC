@@ -28,12 +28,16 @@ export const HtmlElement = Base => class HtmlEle extends Base {
 
     videoEle = document.getElementById(videoId)
 
-    if (!videoEle || videoEle.tagName.toLowerCase() !== 'video') {
-      log.e('未找到 video 元素')
-      return false
-    } else {
-      return videoEle
+    let ret = checkTagName({
+      name: 'canvas',
+      element: videoEle
+    })
+
+    if (!ret) {
+      log.e(`未找到 video 元素`)
     }
+
+    return ret
   }
 
   /**
@@ -51,11 +55,39 @@ export const HtmlElement = Base => class HtmlEle extends Base {
 
     canvasEle = document.getElementById(canvasId)
 
-    if (!canvasEle || canvasEle.tagName.toLowerCase() !== 'canvas') {
-      log.e('拍照失败[未找到canvas元素]')
-      return false
-    } else {
-      return canvasEle
+    let ret = checkTagName({
+      name: 'canvas',
+      element: canvasEle
+    })
+
+    if (!ret) {
+      log.e(`未找到 canvas 元素`)
+    }
+
+    return ret
+  }
+
+  /**
+   * 关闭
+   */
+  close () {
+    this.canvas = this.video = undefined
+    if (judgeType('function', super.close)) {
+      super.close()
     }
   }
+}
+
+/**
+ * 判断标签名
+ * @param {string} name 标签名
+ * @param {object} element DOM元素
+ * @returns {object | boolean} 元素与标签名匹配返回 DOM 元素；否则 false
+ */
+function checkTagName ({ name, element }) {
+  if (!(judgeType('string', name) && judgeType('object', element))) {
+    return false
+  }
+
+  return element && element.tagName.toLowerCase() === name ? element : false
 }

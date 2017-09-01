@@ -41,103 +41,58 @@
           log.e('初始化失败')
         }
       },
-      bindEvts () {
+      evtsSubscribe () {
         let evtsPairs = {} // 批量订阅参数
 
-        // 发送本地 sdp 到远端
-        Object.assign(evtsPairs, {
-          pLocalSDPReady: sdp => {
-            this.ws.send(JSON.stringify({
-              cmdId: '1004',
-              robotId: 'ROBOT111',
-              sdp
-            }))
-          }
-        })
-
-        // 发送 ice candidate 到远端
-        Object.assign(evtsPairs, {
-          pOnIceCandidate: candidate => {
-            this.ws.send(JSON.stringify({
-              cmdId: '1006',
-              robotId: 'ROBOT111',
-              candidate
-            }))
-          }
-        })
-
-        // 从 p2p 连接获取流媒体
-        Object.assign(evtsPairs, {
-          pIceConnConnected: () => {
-            let streamArr = this.answer._rtcGetRemoteStreams()
-            if (streamArr.length > 0) {
-              this.$refs.vida.srcObject = streamArr[0]
-            } else {
-              log.e('远程流媒体未找到')
-            }
-          }
-        })
-
-        // 错误事件回调
-        Object.assign(evtsPairs, {errHandler: this.errHandler})
+        Object.assign(evtsPairs, { pLocalSDPReady: this.pLocalSDPReady })
+        Object.assign(evtsPairs, { pOnIceCandidate: this.pOnIceCandidate })
+        Object.assign(evtsPairs, { pIceConnConnected: this.pIceConnConnected })
+        Object.assign(evtsPairs, { errHandler: this.errHandler })
 
         this.answer._rtcEvtsSubscribe({ pairs: evtsPairs })
       },
       close () {
         this.answer.close()
       },
-      errHandler (options = {}) {
-        const {
-          type,
-          value,
-          code
-        } = options
+      // 错误事件回调
+      errHandler ({ code, type, value }) {
         log.i(`错误代码: ${code}`)
-        switch (type) {
-          case 'peerConnection':
-            // p2p 错误
-            switch (code) {
-              case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
-                // TODO 处理连接超时
-                break
-              case errCode.P2P_ICECONN_FAILED:
-                // TODO 连接异常关闭处理
-                this.close()
-                break
-              default:
-                break
-            }
-            break
+
+        if (type === 'peerConnection') {
+          // p2p 错误
+          switch (code) {
+            case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
+              // 处理连接超时
+              break
+            case errCode.P2P_ICECONN_FAILED:
+              // 连接异常关闭处理
+              // this.close()
+              break
+          }
         }
       },
       async init () {
         this.initP2P()
-        this.bindEvts()
+        this.evtsSubscribe()
         await this.initWs()
       },
       initP2P () {
-        try {
-          this.answer = new MonAnswer({
-            config: {
-              iceServers: [
-                {
-                  urls: webRtcConfig.stunUrls
-                },
-                {
-                  urls: webRtcConfig.turnUrls,
-                  username: webRtcConfig.turnUser,
-                  credential: webRtcConfig.credential
-                }
-              ]
-            }
-          })
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
+        this.answer = new MonAnswer({
+          config: {
+            iceServers: [
+              {
+                urls: webRtcConfig.stunUrls
+              },
+              {
+                urls: webRtcConfig.turnUrls,
+                username: webRtcConfig.turnUser,
+                credential: webRtcConfig.credential
+              }
+            ]
           }
-          log.e('p2p 连接初始化失败')
-        }
+        })
       },
+      // 初始化 websocket[信令通道]
       initWs () {
         return new Promise((resolve, reject) => {
           this.ws = new WebSocket(webRtcConfig.rmsUrl)
@@ -155,19 +110,34 @@
           }
 
           this.ws.onmessage = this.wsMsgHandler
-
-          this.ws.onerror = msg => {
-            log.e('websocket[信令通道] 发生错误: ', msg)
-          }
-
-          this.ws.onclose = evt => {
-            if (evt.code === 1000) {
-              log.d('websocket[webRTC] 正常关闭')
-            } else {
-              log.e('websocket[webRTC] 异常关闭: ', evt)
-            }
-          }
+          this.ws.onerror = msg => log.e('websocket[信令通道] 发生错误: ', msg)
+          this.ws.onclose = evt => log.e('websocket[信令通道] 关闭: ', evt)
         })
+      },
+      // 从 p2p 连接获取流媒体
+      pIceConnConnected () {
+        let streamArr = this.answer._rtcGetRemoteStreams()
+        if (streamArr.length > 0) {
+          this.$refs.vida.srcObject = streamArr[0]
+        } else {
+          log.e('远程流媒体未找到')
+        }
+      },
+      // 发送本地 sdp 到远端
+      pLocalSDPReady (sdp) {
+        this.ws.send(JSON.stringify({
+          cmdId: '1004',
+          robotId: 'ROBOT111',
+          sdp
+        }))
+      },
+      // 发送 ice candidate 到远端
+      pOnIceCandidate (ice) {
+        this.ws.send(JSON.stringify({
+          cmdId: '1006',
+          robotId: 'ROBOT111',
+          candidate: ice
+        }))
       },
       async start () {
         let ret = await this.answer.start()

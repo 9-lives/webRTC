@@ -36,12 +36,13 @@ export class MonAnswer extends P2P {
       super[resetP2PConnTimer]()
     }
 
-    let candidate = this.iceBuff.pop()
+    let ice = this.iceBuff.pop()
 
-    while (!judgeType('undefined', candidate)) {
+    while (!judgeType('object', ice)) {
       log.d('ice candidate[来自远程] 添加到 p2p 连接')
+
       try {
-        await this.peerConn.addIceCandidate(candidate)
+        await this.peerConn.addIceCandidate(ice)
       } catch (err) {
         if (err.message) {
           log.e(err.message)
@@ -53,7 +54,8 @@ export class MonAnswer extends P2P {
           code: errCode.P2P_ICE_ADDFAILED
         })
       }
-      candidate = this.iceBuff.pop()
+
+      ice = this.iceBuff.pop()
     }
   }
 
@@ -80,7 +82,7 @@ export class MonAnswer extends P2P {
           log.e(err.message)
         }
         log.e('远程 offer 设置失败')
-        this[errHandler]({
+        await this[errHandler]({
           type: 'peerConnection',
           code: errCode.P2P_SDP_REMOTE_SETFAILED
         })

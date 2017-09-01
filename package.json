@@ -1,5 +1,5 @@
 {
-  "name": "webRTC 前端库",
+  "name": "webRTC",
   "version": "0.0.1",
   "description": "支持 p2p通信，录音、录像、录屏的 webRTC 前端库",
   "author": "彭泽华 <911120823@qq.com.cn>",

@@ -67,7 +67,7 @@
       },
       errHandler ({ code, type, value }) {
         if (type === 'mediaRecorder') {
-          // TODO 处理录制错误
+          // 处理录制错误
         }
       },
       // 选择麦克风标签
@@ -129,7 +129,7 @@
             timeSlice: 3 // 时间片大小
           })
           if (ret !== true) {
-            // TODO 录制失败处理
+            // 录制失败处理
           }
         } catch (err) {
           if (err.message) {
@@ -149,7 +149,10 @@
         // 释放先前的URL
         this.revokeURL()
         this.url = window.URL.createObjectURL(blob)
-        this.$refs.preview.src = this.url
+        if (this.$refs.preview) {
+          // 修复未录制完成离开页面报错
+          this.$refs.preview.src = this.url
+        }
       },
       // 释放预览文件的URL
       revokeURL () {

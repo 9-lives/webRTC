@@ -92,7 +92,7 @@
           }
 
           this.ws.onerror = msg => log.e('websocket[录制通道] 发生错误: ', msg)
-          this.ws.onclose = evt => log.d('websocket[录制通道] 正常关闭')
+          this.ws.onclose = evt => log.d('websocket[录制通道] 关闭')
         })
       },
       // 获取录制数据
@@ -108,7 +108,7 @@
           })
 
           if (ret !== true) {
-            // TODO 录屏失败处理
+            // 录屏失败处理
           }
         } catch (err) {
           if (err.message) {
@@ -126,7 +126,7 @@
         this.url = window.URL.createObjectURL(blob)
 
         if (this.$refs.screen) {
-          // 未录制完成close可能导致报错
+          // 修复未录制完成离开页面报错
           this.$refs.screen.src = this.url
         }
       },
@@ -146,7 +146,7 @@
         if (ret === true) {
           log.d('录屏初始化完毕')
         } else {
-          // TODO 启动录屏失败处理
+          // 启动录屏失败处理
         }
       },
       // 停止录制

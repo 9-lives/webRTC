@@ -34,7 +34,7 @@ export class P2P extends RtcBase {
     }
 
     this.peerConn = new RTCPeerConnection(this.config) // p2p 连接对象
-    this.peerConn.onicecandidate = async evt => {
+    this.peerConn.onicecandidate = evt => {
       // 采集本地 ice candidate
       if (evt.candidate) {
         // 本地 ice candidate 上传至服务器
@@ -55,7 +55,7 @@ export class P2P extends RtcBase {
     }
 
     // 接收到远程流媒体(标准已移除)
-    this.peerConn.onaddstream = async streamEvt => {
+    this.peerConn.onaddstream = streamEvt => {
       log.i('收到远程流媒体：', streamEvt.stream)
 
       this.evtCallBack({
@@ -65,10 +65,9 @@ export class P2P extends RtcBase {
         errType: 'peerConnection'
       })
     }
+
     // p2p 流媒体已移除
-    this.peerConn.onremovestream = () => {
-      log.d('流媒体已移除')
-    }
+    this.peerConn.onremovestream = () => log.d('流媒体已移除')
 
     /*
      * 根据工作草案，应使用此事件感知 p2p 连接状态变化，遗憾的是，浏览器(chrome 60)未支持 connectionState 属性
@@ -118,7 +117,7 @@ export class P2P extends RtcBase {
         case 'failed':
           log.e('p2p ice 连接异常关闭')
 
-          this[errHandler]({
+          await this[errHandler]({
             type: 'peerConnection',
             code: errCode.P2P_ICECONN_FAILED
           })
@@ -233,22 +232,24 @@ export class P2P extends RtcBase {
    */
   [resetP2PConnTimer] () {
     this[clearP2PConnTimer]()
-    this.p2pConnTimer = setTimeout(() => {
+    this.p2pConnTimer = setTimeout(async () => {
       log.e('p2p建立连接超时')
-      this[errHandler]({
+      this.p2pConnTimer = undefined
+      await this[errHandler]({
         type: 'peerConnection',
         code: errCode.P2P_ICECONN_ESTABLISH_TIMEOUT
       })
-      this.p2pConnTimer = undefined
     }, webRtcConfig.p2pConnTimeout * 1000)
   }
 
   /**
-   * 获取 p2p 连接的远程流媒体
+   * 获取 p2p 连接的远端流媒体
    */
   _rtcGetRemoteStreams () {
     if (this.peerConn instanceof RTCPeerConnection) {
       return this.peerConn.getRemoteStreams()
+    } else {
+      log.e('取远端流媒体失败[p2p连接未找到]')
     }
   }
 }

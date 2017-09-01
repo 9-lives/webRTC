@@ -48,29 +48,11 @@
         await this.init()
         this.devInfo = await this.offer._rtcGetDevInfo()
       },
-      bindEvts () {
+      evtsSubscribe () {
         let evtsPairs = {} // 批量订阅参数
 
-        Object.assign(evtsPairs, {
-          pLocalSDPReady: sdp => {
-            this.ws.send(JSON.stringify({
-              cmdId: '1004',
-              robotId: 'ROBOT111',
-              sdp
-            }))
-          }
-        })
-
-        Object.assign(evtsPairs, {
-          pOnIceCandidate: ice => {
-            this.ws.send(JSON.stringify({
-              cmdId: '1006',
-              robotId: 'ROBOT111',
-              candidate: ice
-            }))
-          }
-        })
-
+        Object.assign(evtsPairs, { pLocalSDPReady: this.pLocalSDPReady })
+        Object.assign(evtsPairs, { pOnIceCandidate: this.pOnIceCandidate })
         Object.assign(evtsPairs, { errHandler: this.errHandler })
 
         this.offer._rtcEvtsSubscribe({ pairs: evtsPairs })
@@ -79,30 +61,22 @@
         this.offer.close()
         this.btnClicked = this.btnClicked === false
       },
-      errHandler (options = {}) {
-        const {
-          type,
-          value,
-          code
-        } = options
-
+      errHandler ({ code, type, value }) {
         log.e(`错误代码: ${code}`)
 
-        switch (type) {
-          case 'peerConnection':
-            // p2p 错误
-            switch (code) {
-              case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
-                // TODO 处理连接超时
-                break
-              case errCode.P2P_ICECONN_FAILED:
-                // TODO 处理连接异常关闭
-                this.close()
-                break
-              default:
-                break
-            }
-            break
+        if (type === 'peerConnection') {
+          // p2p 错误
+          switch (code) {
+            case errCode.P2P_ICECONN_ESTABLISH_TIMEOUT:
+              // 处理连接超时
+              break
+            case errCode.P2P_ICECONN_FAILED:
+              // 处理连接异常关闭
+              this.close()
+              break
+            default:
+              break
+          }
         }
       },
       // 选择麦克风标签
@@ -115,32 +89,26 @@
       },
       async init () {
         this.initP2P()
-        this.bindEvts()
+        this.evtsSubscribe()
         await this.initWs()
       },
       initP2P () {
-        try {
-          this.offer = new MonOffer({
-            config: {
-              iceServers: [
-                {
-                  urls: webRtcConfig.stunUrls
-                },
-                {
-                  urls: webRtcConfig.turnUrls,
-                  username: webRtcConfig.turnUser,
-                  credential: webRtcConfig.credential
-                }
-              ]
-            }
-          })
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
+        this.offer = new MonOffer({
+          config: {
+            iceServers: [
+              {
+                urls: webRtcConfig.stunUrls
+              },
+              {
+                urls: webRtcConfig.turnUrls,
+                username: webRtcConfig.turnUser,
+                credential: webRtcConfig.credential
+              }
+            ]
           }
-          log.e('p2p 连接初始化失败')
-        }
+        })
       },
+      // 初始化 websocket[信令通道]
       initWs () {
         return new Promise((resolve, reject) => {
           this.ws = new WebSocket(webRtcConfig.rmsUrl)
@@ -148,27 +116,35 @@
           this.ws.onopen = async evt => {
             if (this.ws.readyState !== 1) {
               this.ws.close()
-              reject(new Error('websocket[webRTC] 连接建立失败'))
+              reject(new Error('websocket[信令通道] 连接建立失败'))
             } else {
-              log.d('websocket[webRTC] 已连接')
-
+              log.d('websocket[信令通道] 已连接')
               this.wsAuthorizaion()
+
               resolve()
             }
           }
 
           this.ws.onmessage = this.wsMsgHandler
-
           this.ws.onerror = msg => log.e('websocket[信令通道] 发生错误: ', msg)
-
-          this.ws.onclose = evt => {
-            if (evt.code === 1000) {
-              log.d('websocket[webRTC] 正常关闭')
-            } else {
-              log.e('websocket[webRTC] 异常关闭: ', evt)
-            }
-          }
+          this.ws.onclose = evt => log.e('websocket[信令通道] 异常关闭: ', evt)
         })
+      },
+      // 发送本地 sdp 到远端
+      pLocalSDPReady (sdp) {
+        this.ws.send(JSON.stringify({
+          cmdId: '1004',
+          robotId: 'ROBOT111',
+          sdp
+        }))
+      },
+      // 发送 ice candidate 到远端
+      pOnIceCandidate (ice) {
+        this.ws.send(JSON.stringify({
+          cmdId: '1006',
+          robotId: 'ROBOT111',
+          candidate: ice
+        }))
       },
       async start () {
         let ret = await this.offer.start({

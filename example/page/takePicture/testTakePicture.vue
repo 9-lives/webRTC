@@ -1,8 +1,8 @@
 <template>
   <div>
     <div class="block">
-      <video id="tpaaa" width=400 height=300 autoplay></video>
-      <canvas id="tpccc" width=400 height=300 ></canvas>
+      <video id="tpv" width=400 height=300 autoplay></video>
+      <canvas id="tpc" width=400 height=300 ></canvas>
     </div>
     <ui-selectlabel :devInfo="devInfo" :micShow="false" @chosenV="getCamLabel"/>
     <div class="block">
@@ -58,11 +58,11 @@
       async preview () {
         let ret = await this.tp.start({
           // camNo: 0,
-          canvasId: 'tpccc',
+          canvasId: 'tpc',
           facingMode: 'user', // 视频轨方向
           // pid: '0401',
           // vid: '5986',
-          videoId: 'tpaaa',
+          videoId: 'tpv',
           vLabel: this.camLabel
         })
         if (ret === true) {

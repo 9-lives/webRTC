@@ -60,7 +60,7 @@ export class MonOffer extends P2P {
         }
         log.e('远程 answer 设置失败')
 
-        this[errHandler]({
+        await this[errHandler]({
           type: 'peerConnection',
           code: errCode.P2P_SDP_REMOTE_SETFAILED
         })

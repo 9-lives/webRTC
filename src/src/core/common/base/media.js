@@ -22,8 +22,12 @@ const MediaBase = Base => class MediaBase extends Base {
         stream: this.mediaStream
       })
 
-      this.canvas = this.mediaStream = this.video = undefined
+      this.mediaStream = undefined
       log.d('多媒体设备已关闭')
+
+      if (judgeType('function', super.close)) {
+        super.close()
+      }
     }
   }
 
@@ -105,15 +109,15 @@ const MediaBase = Base => class MediaBase extends Base {
    * @returns {boolean} 激活状态 true，终止状态 false
    */
   [isActive] () {
-    if (this.mediaStream instanceof MediaStream) {
-      if (!judgeType('undefined', this.mediaStream.active)) {
-        return this.mediaStream.active
-      } else {
-        log.e('检测媒体流状态失败[active属性未找到]')
-        return false
-      }
-    } else {
+    if (!(this.mediaStream instanceof MediaStream)) {
       log.e('检测媒体流状态失败[媒体流不存在]')
+      return false
+    }
+
+    if (!judgeType('undefined', this.mediaStream.active)) {
+      return this.mediaStream.active
+    } else {
+      log.e('检测媒体流状态失败[active属性未找到]')
       return false
     }
   }
