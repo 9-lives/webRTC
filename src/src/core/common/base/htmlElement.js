@@ -14,6 +14,16 @@ export const HtmlElement = Base => class HtmlEle extends Base {
   }
 
   /**
+   * 清理保存的DOM元素
+   */
+  close () {
+    this.canvas = this.video = undefined
+    if (judgeType('function', super.close)) {
+      super.close()
+    }
+  }
+
+  /**
     * 查找video元素
     * @param {string} videoId: video元素的ID
     * @returns {object || boolean} 查找成功返回指定元素，查找失败返回 false
@@ -65,16 +75,6 @@ export const HtmlElement = Base => class HtmlEle extends Base {
     }
 
     return ret
-  }
-
-  /**
-   * 关闭
-   */
-  close () {
-    this.canvas = this.video = undefined
-    if (judgeType('function', super.close)) {
-      super.close()
-    }
   }
 }
 

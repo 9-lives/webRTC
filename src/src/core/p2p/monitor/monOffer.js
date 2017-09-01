@@ -1,6 +1,7 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/index'
 import { createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
+import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 
 /**
@@ -13,12 +14,21 @@ export class MonOffer extends P2P {
   }
 
   /**
-   * 开启 p2p 连接
+   * 初始化
+   * @param {object} options RTCPeerConnection 配置
+   * @returns {boolean} 初始化成功返回 true
+   */
+  init (options = {}) {
+    super[pConnInit](options)
+    return true
+  }
+
+  /**
+   * 启动 p2p 连接
+   * @param {object} options 流媒体约束参数
+   * @returns {boolean} 启动 p2p 连接成功返回 true
    */
   async start (options = {}) {
-    // PeerConnection 对象初始化
-    super[pConnInit]()
-
     // 获取设备信息
     let devInfo = await super._rtcGetDevInfo()
 
@@ -98,7 +108,7 @@ export class MonOffer extends P2P {
         })
       }
 
-      if (!judgeType('undefined', this.p2pConnTimer)) {
+      if (!judgeType('undefined', super[p2pConnTimer])) {
         // 复位连接超时计时器
         super[resetP2PConnTimer]()
       }

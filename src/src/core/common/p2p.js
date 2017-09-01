@@ -1,6 +1,7 @@
 import { log } from '../../index'
 import { RtcBase } from './index'
 import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../constants/methods/index'
+import { p2pConnTimer } from '../../constants/property/index'
 import * as errCode from '../../constants/errorCode/index'
 import * as evtNames from '../../constants/eventName'
 import { judgeType } from '../../utils'
@@ -14,140 +15,65 @@ const clearP2PConnTimer = Symbol('clearP2PConnTimer') // 复位 p2p 连接超时
  */
 export class P2P extends RtcBase {
   constructor (options = {}) {
-    const {
-      config = {}
-    } = options
     super(options)
-    this.config = config // p2p 连接参数
-    this._rtcP2PConnectionState = undefined // p2p 连接状态（chrome60、firefox55 PC端没有提供接口查询）。仅提供connected, disconnected
+    this.dataChannel = undefined // p2p 数据通道
     this.peerConn = undefined // p2p连接
-    this.p2pConnTimer = undefined // p2p 连通超时计时器
+    this[p2pConnTimer] = undefined // p2p 连通超时计时器
   }
 
   /**
    * PeerConnection 对象初始化
+   * @param {object} options RTCPeerConnection 配置
    */
-  [pConnInit] () {
+  [pConnInit] (options = {}) {
     if (!window.RTCPeerConnection) {
       log.e('RTCPeerConnection API 不存在，请更换浏览器')
       throw new Error('peerConnection 对象初始化失败')
     }
 
-    this.peerConn = new RTCPeerConnection(this.config) // p2p 连接对象
-    this.peerConn.onicecandidate = evt => {
-      // 采集本地 ice candidate
-      if (evt.candidate) {
-        // 本地 ice candidate 上传至服务器
-        log.d('ice candidate已采集[本地]')
+    this.peerConn = new RTCPeerConnection(options) // p2p 连接对象
 
-        this.evtCallBack({
-          evtName: 'pOnIceCandidate',
-          args: [evt.candidate],
-          codeName: 'P2P_HOOK_ICE_GATHERER',
-          errType: 'peerConnection'
-        })
-      }
-    }
-    // 准备 sdp 协商(offerer)
-    this.peerConn.onnegotiationneeded = async evt => {
-      log.d('发起 sdp 协商')
-      await this[createSDP]({ type: 'offer' })
+    this.peerConn.onaddstream = onaddstream.bind(this)
+
+    this.peerConn.ondatachannel = e => {
+      this.dataChannel = e.channel
     }
 
-    // 接收到远程流媒体(标准已移除)
-    this.peerConn.onaddstream = streamEvt => {
-      log.i('收到远程流媒体：', streamEvt.stream)
-
-      this.evtCallBack({
-        evtName: 'pOnAddStream',
-        args: [streamEvt.stream],
-        codeName: 'P2P_HOOK_STREAM_RECEIVED',
-        errType: 'peerConnection'
-      })
-    }
-
-    // p2p 流媒体已移除
-    this.peerConn.onremovestream = () => log.d('流媒体已移除')
+    this.peerConn.onicecandidate = onicecandidate.bind(this)
 
     /*
      * 根据工作草案，应使用此事件感知 p2p 连接状态变化，遗憾的是，浏览器(chrome 60)未支持 connectionState 属性
      */
     // this.peerConn.onconnectionstatechange = () => {}
 
-    // ice 连接状态改变
-    this.peerConn.oniceconnectionstatechange = async evt => {
-      switch (this.peerConn.iceConnectionState) {
-        case 'completed':
-          // 搜集完毕不一定发现通路
-          log.d('ice candidate 搜集完毕')
-
-          this.evtCallBack({
-            evtName: 'pIceConnCompleted',
-            args: [evt],
-            codeName: 'P2P_HOOK_ICE_CONN_COMPLETED',
-            errType: 'peerConnection'
-          })
-          break
-        case 'connected':
-          log.d('p2p ice 连接成功, 清除超时计时器')
-          this[clearP2PConnTimer]()
-
-          this.evtCallBack({
-            evtName: 'pIceConnConnected',
-            args: [evt],
-            codeName: 'P2P_HOOK_ICE_CONN_CONNECTED',
-            errType: 'peerConnection'
-          })
-          break
-        /**
-         * TODO 避开未实现的工作草案，查询连接状态，区分正常 / 异常的disconnected、failed，针对性报错
-         * 在上述工作未完成前，后面的两种情况存在BUG
-         */
-        case 'disconnected':
-           // 可能的情况： 1. 远端主动断开连接，稍后本地 ice 连接状态将变为 failed  2. ice 通路故障，若故障修复连接状态将变为 connected,否则 failed
-          log.d('p2p ice 连接中断')
-
-          this.evtCallBack({
-            evtName: 'pIceConnDisconnected',
-            args: [evt],
-            codeName: 'P2P_HOOK_ICE_CONN_DISCONNECTED',
-            errType: 'peerConnection'
-          })
-          break
-        case 'failed':
-          log.e('p2p ice 连接异常关闭')
-
-          await this[errHandler]({
-            type: 'peerConnection',
-            code: errCode.P2P_ICECONN_FAILED
-          })
-          break
-        default:
-          break
-      }
-    }
+    this.peerConn.oniceconnectionstatechange = oniceconnectionstatechange.bind(this)
 
     /**
      * 根据工作草案，应使用此事件感知 ice agent 搜集状态变化，遗憾的是，浏览器(chrome 60)未支持该事件
      */
     // this.peerConn.onicegatheringstatechange = () => {}
 
+    this.peerConn.onnegotiationneeded = onnegotiationneeded.bind(this)
+
+    // p2p 流媒体已移除
+    this.peerConn.onremovestream = () => log.d('流媒体已移除')
+
     /**
      * 信令状态改变
-     * 该事件监听在chrome 60 似乎存在BUG，本地测试一定几率观察到浏览器遗漏状态变更，结果是发出两次状态变更到stable事件。
+     * 该事件监听在chrome 60 似乎存在BUG，本地测试一定几率观察到浏览器遗漏状态变更，结果是发出两次状态变更到stable事件
+     * 由于可能的chrome bug，放弃在此进行检查或优化
      */
-    // this.peerConn.onsignalingstatechange = (evt) => {
-    //   // 由于可能的chrome bug，放弃在此进行检查或优化
-    // }
+    // this.peerConn.onsignalingstatechange = () => {}
   }
 
   /**
    * 创建并设置本地 SDP 信令
+   * @param {string} role 角色。 offer 或 answer
    */
-  async [createSDP] ({ type } = { type: '' }) {
+  async [createSDP] ({ role }) {
     let sdp
     try {
-      switch (type) {
+      switch (role) {
         case 'offer':
           sdp = await this.peerConn.createOffer()
           break
@@ -158,9 +84,7 @@ export class P2P extends RtcBase {
           throw new Error('本地 sdp 生成参数错误')
       }
     } catch (err) {
-      if (err.message) {
-        log.e(err.message)
-      }
+      log.e(err.message)
       log.e('本地 sdp 生成失败')
       await this[errHandler]({
         type: 'peerConnection',
@@ -195,35 +119,39 @@ export class P2P extends RtcBase {
   }
 
   /**
-   * 关闭连接
+   * 关闭p2p连接及本地流媒体
    */
   async close () {
-    if (this.peerConn instanceof RTCPeerConnection) {
-      this[clearP2PConnTimer]()
-
-      if (this.peerConn.signalingState !== 'closed') {
-        log.d('p2p 连接已关闭')
-        this.peerConn.close()
-      }
-      super.close()
-
-      this.evtCallBack({
-        evtName: 'pClosed',
-        codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
-        errType: 'peerConnection'
-      })
-    } else {
+    if (!(this.peerConn instanceof RTCPeerConnection)) {
       log.e('p2p 连接关闭失败[连接不存在]')
+      return false
     }
+
+    this[clearP2PConnTimer]()
+
+    if (this.peerConn.signalingState !== 'closed') {
+      log.d('p2p 连接已关闭')
+      this.peerConn.close()
+    }
+
+    if (judgeType('function', super.close)) {
+      super.close()
+    }
+
+    this.evtCallBack({
+      evtName: 'pClosed',
+      codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
+      errType: 'peerConnection'
+    })
   }
 
   /**
    * 清除 p2p 连接超时计时器
    */
   [clearP2PConnTimer] () {
-    if (!judgeType('undefined', this.p2pConnTimer)) {
-      clearTimeout(this.p2pConnTimer)
-      this.p2pConnTimer = undefined
+    if (!judgeType('undefined', this[p2pConnTimer])) {
+      clearTimeout(this[p2pConnTimer])
+      this[p2pConnTimer] = undefined
     }
   }
 
@@ -232,9 +160,10 @@ export class P2P extends RtcBase {
    */
   [resetP2PConnTimer] () {
     this[clearP2PConnTimer]()
-    this.p2pConnTimer = setTimeout(async () => {
+    this[p2pConnTimer] = setTimeout(async () => {
       log.e('p2p建立连接超时')
-      this.p2pConnTimer = undefined
+      this[p2pConnTimer] = undefined
+
       await this[errHandler]({
         type: 'peerConnection',
         code: errCode.P2P_ICECONN_ESTABLISH_TIMEOUT
@@ -252,4 +181,102 @@ export class P2P extends RtcBase {
       log.e('取远端流媒体失败[p2p连接未找到]')
     }
   }
+}
+
+/**
+ * p2p连接事件监听 - 接收到远程流媒体(标准已移除)
+ * @param {object} 事件
+ */
+function onaddstream (evt) {
+  log.i('收到远程流媒体：', evt.stream)
+
+  this.evtCallBack({
+    evtName: 'pOnAddStream',
+    args: [evt.stream],
+    codeName: 'P2P_HOOK_STREAM_RECEIVED',
+    errType: 'peerConnection'
+  })
+}
+
+/**
+ * p2p连接事件监听 - 正在采集本地 ice candidate
+ * @param {object} 事件对象
+ */
+function onicecandidate (evt) {
+  if (evt.candidate) {
+    // 本地 ice candidate 上传至服务器
+    log.d('ice candidate已采集[本地]')
+
+    this.evtCallBack({
+      evtName: 'pOnIceCandidate',
+      args: [evt.candidate],
+      codeName: 'P2P_HOOK_ICE_GATHERER',
+      errType: 'peerConnection'
+    })
+  }
+}
+
+/**
+ * p2p连接事件监听 - ice 连接状态改变
+ * @param {object} evt 事件对象
+ */
+async function oniceconnectionstatechange (evt) {
+  switch (this.peerConn.iceConnectionState) {
+    case 'completed':
+      // 搜集完毕不一定发现通路
+      log.d('ice candidate 搜集完毕')
+
+      this.evtCallBack({
+        evtName: 'pIceConnCompleted',
+        args: [evt],
+        codeName: 'P2P_HOOK_ICE_CONN_COMPLETED',
+        errType: 'peerConnection'
+      })
+      break
+    case 'connected':
+      log.d('p2p ice 连接成功, 清除超时计时器')
+
+      this[clearP2PConnTimer]()
+
+      this.evtCallBack({
+        evtName: 'pIceConnConnected',
+        args: [evt],
+        codeName: 'P2P_HOOK_ICE_CONN_CONNECTED',
+        errType: 'peerConnection'
+      })
+      break
+    /**
+      * TODO 查询连接状态，区分正常 / 异常的disconnected、failed，针对性报错
+      * 在上述工作未完成前，后面的两种情况存在BUG
+      */
+    case 'disconnected':
+        // 可能的情况： 1. 远端主动断开连接，稍后本地 ice 连接状态将变为 failed  2. ice 通路故障，若故障修复连接状态将变为 connected,否则 failed
+      log.d('p2p ice 连接中断')
+
+      this.evtCallBack({
+        evtName: 'pIceConnDisconnected',
+        args: [evt],
+        codeName: 'P2P_HOOK_ICE_CONN_DISCONNECTED',
+        errType: 'peerConnection'
+      })
+      break
+    case 'failed':
+      log.e('p2p ice 连接异常关闭')
+
+      await this[errHandler]({
+        type: 'peerConnection',
+        code: errCode.P2P_ICECONN_FAILED
+      })
+      break
+    default:
+      break
+  }
+}
+
+/**
+ * p2p连接事件监听 - 准备 sdp 协商(offerer)
+ */
+async function onnegotiationneeded () {
+  log.d('发起 sdp 协商')
+  await this[createSDP]({ role: 'offer' })
 }

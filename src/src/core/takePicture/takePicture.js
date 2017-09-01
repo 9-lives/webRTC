@@ -60,18 +60,13 @@ export class TakePicture extends RtcBase {
   /**
    * 拍照
    */
-  takePicture (options = {}) {
+  takePicture ({ w = 400, h = 300 }) {
+    if (!judgeType('number', w, h)) {
+      log.e('拍照失败[参数类型错误]')
+      return false
+    }
+
     if (this[isActive]()) {
-      let {
-        w = 400,
-        h = 300
-      } = options
-
-      w = Number.parseInt(w)
-      h = Number.parseInt(h)
-      w = isNaN(w) ? 0 : w
-      h = isNaN(h) ? 0 : h
-
       this.canvas.getContext('2d').drawImage(this.video, 0, 0, w, h)
       return true
     } else {

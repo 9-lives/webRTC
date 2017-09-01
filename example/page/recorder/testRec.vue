@@ -98,7 +98,7 @@
           }
 
           this.ws.onerror = msg => log.e('websocket[录制通道] 发生错误: ', msg)
-          this.ws.onclose = evt => log.d('websocket[录制通道] 关闭')
+          this.ws.onclose = evt => log.d('websocket[录制通道] 关闭: ', evt)
         })
       },
       async preview () {

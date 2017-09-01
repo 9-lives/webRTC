@@ -13,7 +13,7 @@ const MediaBase = Base => class MediaBase extends Base {
   }
 
   /**
-   * 关闭
+   * 关闭本地流媒体
    */
   close () {
     if (this.mediaStream instanceof MediaStream) {
@@ -124,22 +124,6 @@ const MediaBase = Base => class MediaBase extends Base {
 }
 
 /**
- * 关闭流媒体的所有轨道
- * @param {object} stream 流媒体
- */
-function stopMediaTracks ({ stream }) {
-  if (stream instanceof MediaStream) {
-    let tracks = stream.getTracks()
-
-    if (tracks && tracks instanceof Array) {
-      for (let track of tracks) {
-        track.stop()
-      }
-    }
-  }
-}
-
-/**
  * 构造音频轨约束
  * @param {object} options 音频轨约束参数
  * @param {string} aDevId 音频输入设备ID
@@ -211,6 +195,22 @@ function createVideoTrackConstraints ({ options = {}, vDevId }) {
   }
 
   return constraints
+}
+
+/**
+ * 关闭流媒体的所有轨道
+ * @param {object} stream 流媒体
+ */
+function stopMediaTracks ({ stream }) {
+  if (stream instanceof MediaStream) {
+    let tracks = stream.getTracks()
+
+    if (tracks && tracks instanceof Array) {
+      for (let track of tracks) {
+        track.stop()
+      }
+    }
+  }
 }
 
 // Media 类继承 Device 类

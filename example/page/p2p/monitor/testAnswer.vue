@@ -3,6 +3,10 @@
     <div class="block">
       <video autoplay width=400 height=300 ref="vida"></video>
     </div>
+    <div class="block">
+      <button :disabled="btnClicked" @click="initP2P">开启监控</button>
+      <button :disabled="!btnClicked" @click="close">关闭监控</button>
+    </div>
     <ui-gohome />
   </div>
 </template>
@@ -18,12 +22,18 @@
     },
     data () {
       return {
+        btnClicked: false,
         conn: undefined,
         ws: undefined // websocket[信令通道]
       }
     },
-    created () {
-      this.begin()
+    async created () {
+      try {
+        await this.begin()
+      } catch (err) {
+        log.e(err.message)
+        log.e('初始化失败')
+      }
     },
     beforeDestroy () {
       this.close()
@@ -31,15 +41,11 @@
     },
     methods: {
       async begin () {
-        try {
-          await this.init()
-          await this.start()
-        } catch (err) {
-          if (err.message) {
-            log.e(err.message)
-          }
-          log.e('初始化失败')
-        }
+        await this.initWs()
+      },
+      close () {
+        this.answer.close()
+        this.btnClicked = !(this.btnClicked === true)
       },
       evtsSubscribe () {
         let evtsPairs = {} // 批量订阅参数
@@ -50,9 +56,6 @@
         Object.assign(evtsPairs, { errHandler: this.errHandler })
 
         this.answer._rtcEvtsSubscribe({ pairs: evtsPairs })
-      },
-      close () {
-        this.answer.close()
       },
       // 错误事件回调
       errHandler ({ code, type, value }) {
@@ -66,18 +69,14 @@
               break
             case errCode.P2P_ICECONN_FAILED:
               // 连接异常关闭处理
-              // this.close()
+              this.close()
               break
           }
         }
       },
-      async init () {
-        this.initP2P()
-        this.evtsSubscribe()
-        await this.initWs()
-      },
       initP2P () {
-        this.answer = new MonAnswer({
+        this.answer = new MonAnswer()
+        this.answer.init({
           config: {
             iceServers: [
               {
@@ -91,6 +90,9 @@
             ]
           }
         })
+
+        this.evtsSubscribe()
+        this.btnClicked = !(this.btnClicked === true)
       },
       // 初始化 websocket[信令通道]
       initWs () {
@@ -111,7 +113,7 @@
 
           this.ws.onmessage = this.wsMsgHandler
           this.ws.onerror = msg => log.e('websocket[信令通道] 发生错误: ', msg)
-          this.ws.onclose = evt => log.e('websocket[信令通道] 关闭: ', evt)
+          this.ws.onclose = evt => log.i('websocket[信令通道] 关闭: ', evt)
         })
       },
       // 从 p2p 连接获取流媒体
@@ -138,12 +140,6 @@
           robotId: 'ROBOT111',
           candidate: ice
         }))
-      },
-      async start () {
-        let ret = await this.answer.start()
-        if (ret !== true) {
-          log.e('视频设备开启失败')
-        }
       },
       // 信令通道身份认证
       wsAuthorizaion () {

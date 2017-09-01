@@ -32,6 +32,7 @@
     async created () {
       try {
         await this.begin()
+        this.devInfo = await this.offer._rtcGetDevInfo()
       } catch (err) {
         if (err.message) {
           log.e(err.message)
@@ -45,8 +46,17 @@
     },
     methods: {
       async begin () {
-        await this.init()
-        this.devInfo = await this.offer._rtcGetDevInfo()
+        try {
+          await this.init()
+        } catch (err) {
+          if (err.message) {
+            log.e(err.message)
+          }
+        }
+      },
+      close () {
+        this.offer.close()
+        this.btnClicked = this.btnClicked === false
       },
       evtsSubscribe () {
         let evtsPairs = {} // 批量订阅参数
@@ -56,10 +66,6 @@
         Object.assign(evtsPairs, { errHandler: this.errHandler })
 
         this.offer._rtcEvtsSubscribe({ pairs: evtsPairs })
-      },
-      close () {
-        this.offer.close()
-        this.btnClicked = this.btnClicked === false
       },
       errHandler ({ code, type, value }) {
         log.e(`错误代码: ${code}`)
@@ -89,11 +95,12 @@
       },
       async init () {
         this.initP2P()
-        this.evtsSubscribe()
         await this.initWs()
       },
       initP2P () {
-        this.offer = new MonOffer({
+        this.offer = new MonOffer()
+
+        this.offer.init({
           config: {
             iceServers: [
               {
@@ -107,6 +114,8 @@
             ]
           }
         })
+
+        this.evtsSubscribe()
       },
       // 初始化 websocket[信令通道]
       initWs () {
@@ -127,7 +136,7 @@
 
           this.ws.onmessage = this.wsMsgHandler
           this.ws.onerror = msg => log.e('websocket[信令通道] 发生错误: ', msg)
-          this.ws.onclose = evt => log.e('websocket[信令通道] 异常关闭: ', evt)
+          this.ws.onclose = evt => log.i('websocket[信令通道] 关闭: ', evt)
         })
       },
       // 发送本地 sdp 到远端
@@ -147,25 +156,31 @@
         }))
       },
       async start () {
-        let ret = await this.offer.start({
-          // camNo: 0,
-          facingMode: 'user',
-          // pid: 'b5a7',
-          // vid: '04f2',
-          vLabel: this.camLabel,
-          // micNo: 2,
-          mLabel: this.micLabel,
-          frameRate: 10,
-          width: 480,
-          height: 360
-        })
-        if (ret === true) {
-          log.d('视频设备已打开')
-        } else {
-          log.e('视频设备开启失败')
-        }
+        try {
+          this.initP2P()
 
-        this.btnClicked = !(this.btnClicked === true)
+          let ret = await this.offer.start({
+            // camNo: 0,
+            facingMode: 'user',
+            // pid: 'b5a7',
+            // vid: '04f2',
+            vLabel: this.camLabel,
+            // micNo: 2,
+            mLabel: this.micLabel,
+            frameRate: 10,
+            width: 480,
+            height: 360
+          })
+          if (ret === true) {
+            log.d('视频设备已打开')
+          } else {
+            log.e('视频设备开启失败')
+          }
+
+          this.btnClicked = !(this.btnClicked === true)
+        } catch (err) {
+          log.e(err.message)
+        }
       },
       // 信令通道身份认证
       wsAuthorizaion () {
