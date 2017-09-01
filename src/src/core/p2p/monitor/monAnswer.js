@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../common/p2p'
-import { connect, createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
+import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 import * as errCode from '../../../constants/errorCode/index'
 
 const addIceCandidate = Symbol('addIceCandidate')
@@ -22,7 +22,7 @@ export class MonAnswer extends P2P {
    */
   async start (options = {}) {
     // PeerConnection 对象初始化
-    await super[pConnInit]()
+    super[pConnInit]()
 
     return true
   }
@@ -38,7 +38,7 @@ export class MonAnswer extends P2P {
 
     let ice = this.iceBuff.pop()
 
-    while (!judgeType('object', ice)) {
+    while (judgeType('object', ice)) {
       log.d('ice candidate[来自远程] 添加到 p2p 连接')
 
       try {

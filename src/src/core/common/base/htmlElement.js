@@ -29,7 +29,7 @@ export const HtmlElement = Base => class HtmlEle extends Base {
     videoEle = document.getElementById(videoId)
 
     let ret = checkTagName({
-      name: 'canvas',
+      name: 'video',
       element: videoEle
     })
 

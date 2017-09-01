@@ -17,7 +17,7 @@ export class MonOffer extends P2P {
    */
   async start (options = {}) {
     // PeerConnection 对象初始化
-    await super[pConnInit]()
+    super[pConnInit]()
 
     // 获取设备信息
     let devInfo = await super._rtcGetDevInfo()
