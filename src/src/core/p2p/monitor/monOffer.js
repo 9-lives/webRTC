@@ -77,7 +77,10 @@ export class MonOffer extends P2P {
       }
 
       // 复位连接超时计时器
-      super[resetP2PConnTimer]()
+      if (!this.dataChannel) {
+        // 数据通道协商不复位计时器
+        super[resetP2PConnTimer]()
+      }
     }
   }
 

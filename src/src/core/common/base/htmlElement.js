@@ -18,7 +18,7 @@ export const HtmlElement = Base => class HtmlEle extends Base {
    */
   close () {
     this.canvas = this.video = undefined
-    if (judgeType('function', super.close)) {
+    if (super.close) {
       super.close()
     }
   }

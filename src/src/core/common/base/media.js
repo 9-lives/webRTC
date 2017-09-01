@@ -25,7 +25,7 @@ const MediaBase = Base => class MediaBase extends Base {
       this.mediaStream = undefined
       log.d('多媒体设备已关闭')
 
-      if (judgeType('function', super.close)) {
+      if (super.close) {
         super.close()
       }
     }

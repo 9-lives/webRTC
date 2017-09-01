@@ -126,7 +126,10 @@ export class Recorder extends RtcBase {
   async close () {
     if (this.recorder instanceof MediaRecorder) {
       this.recStop()
-      super.close()
+
+      if (super.close) {
+        super.close()
+      }
 
       this.evtCallBack({
         evtName: 'recClosed',

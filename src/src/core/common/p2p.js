@@ -36,20 +36,22 @@ export class P2P extends RtcBase {
     this.peerConn.onaddstream = onaddstream.bind(this)
 
     this.peerConn.ondatachannel = e => {
+      console.log('收到数据通道对象')
       this.dataChannel = e.channel
+      addListener.call(this, { channel: this.dataChannel })
     }
 
     this.peerConn.onicecandidate = onicecandidate.bind(this)
 
     /*
-     * 根据工作草案，应使用此事件感知 p2p 连接状态变化，遗憾的是，浏览器(chrome 60)未支持 connectionState 属性
+     * 根据工作草案，应使用此事件感知 p2p 连接状态变化。浏览器(chrome 60)未支持 connectionState 属性
      */
     // this.peerConn.onconnectionstatechange = () => {}
 
     this.peerConn.oniceconnectionstatechange = oniceconnectionstatechange.bind(this)
 
     /**
-     * 根据工作草案，应使用此事件感知 ice agent 搜集状态变化，遗憾的是，浏览器(chrome 60)未支持该事件
+     * 根据工作草案，应使用此事件感知 ice agent 搜集状态变化。浏览器(chrome 60)未支持该事件
      */
     // this.peerConn.onicegatheringstatechange = () => {}
 
@@ -134,7 +136,7 @@ export class P2P extends RtcBase {
       this.peerConn.close()
     }
 
-    if (judgeType('function', super.close)) {
+    if (super.close) {
       super.close()
     }
 
@@ -143,6 +145,8 @@ export class P2P extends RtcBase {
       codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
       errType: 'peerConnection'
     })
+
+    return true
   }
 
   /**
@@ -152,6 +156,9 @@ export class P2P extends RtcBase {
     if (!judgeType('undefined', this[p2pConnTimer])) {
       clearTimeout(this[p2pConnTimer])
       this[p2pConnTimer] = undefined
+      return true
+    } else {
+      return false
     }
   }
 
@@ -181,6 +188,35 @@ export class P2P extends RtcBase {
       log.e('取远端流媒体失败[p2p连接未找到]')
     }
   }
+}
+
+/**
+ * RTCDatachannel 添加监听
+ * @returns {boolean} 成功添加返回 true；失败 false
+ */
+function addListener ({ channel }) {
+  if (!(channel instanceof window.RTCDataChannel)) {
+    log.e('添加监听失败[rtcDataChannel未找到]')
+    return false
+  }
+
+  this.dataChannel.onopen = () => {
+    log.d('p2p 数据通道已连接')
+  }
+
+  this.dataChannel.onmessage = msg => {
+    log.i('p2p 数据通道收到消息：', msg)
+  }
+
+  this.dataChannel.onerror = evt => {
+    log.e('p2p 数据通道发生错误：', evt)
+  }
+
+  this.dataChannel.onclose = evt => {
+    log.i('p2p 数据通道关闭：', evt)
+  }
+
+  return true
 }
 
 /**
@@ -221,10 +257,17 @@ function onicecandidate (evt) {
  * @param {object} evt 事件对象
  */
 async function oniceconnectionstatechange (evt) {
+  console.log(this.peerConn.iceConnectionState)
   switch (this.peerConn.iceConnectionState) {
     case 'completed':
-      // 搜集完毕不一定发现通路
+      // 至少发现一条通路
       log.d('ice candidate 搜集完毕')
+
+      if (this.peerConn.createDataChannel && !this.dataChannel) {
+        log.d('正在建立点对点数据通道')
+        this.dataChannel = this.peerConn.createDataChannel('rtcDataChannel')
+        addListener.call(this, { channel: this.dataChannel })
+      }
 
       this.evtCallBack({
         evtName: 'pIceConnCompleted',
@@ -234,9 +277,9 @@ async function oniceconnectionstatechange (evt) {
       })
       break
     case 'connected':
-      log.d('p2p ice 连接成功, 清除超时计时器')
-
-      this[clearP2PConnTimer]()
+      if (this[clearP2PConnTimer]()) {
+        log.d('p2p ice 连接成功, 清除超时计时器')
+      }
 
       this.evtCallBack({
         evtName: 'pIceConnConnected',
@@ -267,8 +310,6 @@ async function oniceconnectionstatechange (evt) {
         type: 'peerConnection',
         code: errCode.P2P_ICECONN_FAILED
       })
-      break
-    default:
       break
   }
 }
