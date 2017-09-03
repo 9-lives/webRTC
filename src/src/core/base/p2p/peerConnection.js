@@ -1,17 +1,19 @@
-import { log } from '../../index'
-import { RtcBase } from './index'
-import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../constants/methods/index'
-import { p2pConnTimer } from '../../constants/property/index'
-import * as errCode from '../../constants/errorCode/index'
-import * as evtNames from '../../constants/eventName'
-import { judgeType } from '../../utils'
-import { webRtcConfig } from '../../../config'
+import { RtcBase } from '../index'
+
+import { judgeType, log } from '../../../utils'
+import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
+import { addChannelListener } from './dataChannel'
+
+import { p2pConnTimer } from '../../../constants/property/index'
+import * as errCode from '../../../constants/errorCode/index'
+import * as evtNames from '../../../constants/eventName'
+import { webRtcConfig } from '../../../../config'
 
 const clearP2PConnTimer = Symbol('clearP2PConnTimer') // 复位 p2p 连接超时计时器
 
 /**
- * webRTC peerConnection 基础类
- *  仅兼容chrome 53 及以上版本
+ * peerConnection 类
+ * 目前仅兼容chrome 56 及以上版本
  */
 export class P2P extends RtcBase {
   constructor (options = {}) {
@@ -34,13 +36,7 @@ export class P2P extends RtcBase {
     this.peerConn = new RTCPeerConnection(options) // p2p 连接对象
 
     this.peerConn.onaddstream = onaddstream.bind(this)
-
-    this.peerConn.ondatachannel = e => {
-      console.log('收到数据通道对象')
-      this.dataChannel = e.channel
-      addListener.call(this, { channel: this.dataChannel })
-    }
-
+    this.peerConn.ondatachannel = ondatachannel.bind(this)
     this.peerConn.onicecandidate = onicecandidate.bind(this)
 
     /*
@@ -56,9 +52,7 @@ export class P2P extends RtcBase {
     // this.peerConn.onicegatheringstatechange = () => {}
 
     this.peerConn.onnegotiationneeded = onnegotiationneeded.bind(this)
-
-    // p2p 流媒体已移除
-    this.peerConn.onremovestream = () => log.d('流媒体已移除')
+    this.peerConn.onremovestream = onremovestream.bind(this)
 
     /**
      * 信令状态改变
@@ -191,61 +185,43 @@ export class P2P extends RtcBase {
 }
 
 /**
- * RTCDatachannel 添加监听
- * @returns {boolean} 成功添加返回 true；失败 false
- */
-function addListener ({ channel }) {
-  if (!(channel instanceof window.RTCDataChannel)) {
-    log.e('添加监听失败[rtcDataChannel未找到]')
-    return false
-  }
-
-  this.dataChannel.onopen = () => {
-    log.d('p2p 数据通道已连接')
-  }
-
-  this.dataChannel.onmessage = msg => {
-    log.i('p2p 数据通道收到消息：', msg)
-  }
-
-  this.dataChannel.onerror = evt => {
-    log.e('p2p 数据通道发生错误：', evt)
-  }
-
-  this.dataChannel.onclose = evt => {
-    log.i('p2p 数据通道关闭：', evt)
-  }
-
-  return true
-}
-
-/**
  * p2p连接事件监听 - 接收到远程流媒体(标准已移除)
  * @param {object} 事件
  */
-function onaddstream (evt) {
-  log.i('收到远程流媒体：', evt.stream)
+function onaddstream (e) {
+  log.i('收到远程流媒体：', e.stream)
 
   this.evtCallBack({
     evtName: 'pOnAddStream',
-    args: [evt.stream],
+    args: [e.stream],
     codeName: 'P2P_HOOK_STREAM_RECEIVED',
     errType: 'peerConnection'
   })
 }
 
 /**
+ * p2p连接事件监听 - 收到数据通道对象事件
+ * @param {object} 事件对象
+ */
+function ondatachannel (e) {
+  // 重协商完毕，连接恢复后(iceConnectionState = 'connected')才能收到数据通道对象
+  log.d('p2p 数据通道已连接')
+  this.dataChannel = e.channel
+  addChannelListener.call(this, { channel: this.dataChannel })
+}
+
+/**
  * p2p连接事件监听 - 正在采集本地 ice candidate
  * @param {object} 事件对象
  */
-function onicecandidate (evt) {
-  if (evt.candidate) {
+function onicecandidate (e) {
+  if (e.candidate) {
     // 本地 ice candidate 上传至服务器
     log.d('ice candidate已采集[本地]')
 
     this.evtCallBack({
       evtName: 'pOnIceCandidate',
-      args: [evt.candidate],
+      args: [e.candidate],
       codeName: 'P2P_HOOK_ICE_GATHERER',
       errType: 'peerConnection'
     })
@@ -257,7 +233,6 @@ function onicecandidate (evt) {
  * @param {object} evt 事件对象
  */
 async function oniceconnectionstatechange (evt) {
-  console.log(this.peerConn.iceConnectionState)
   switch (this.peerConn.iceConnectionState) {
     case 'completed':
       // 至少发现一条通路
@@ -266,7 +241,7 @@ async function oniceconnectionstatechange (evt) {
       if (this.peerConn.createDataChannel && !this.dataChannel) {
         log.d('正在建立点对点数据通道')
         this.dataChannel = this.peerConn.createDataChannel('rtcDataChannel')
-        addListener.call(this, { channel: this.dataChannel })
+        addChannelListener.call(this, { channel: this.dataChannel })
       }
 
       this.evtCallBack({
@@ -320,4 +295,11 @@ async function oniceconnectionstatechange (evt) {
 async function onnegotiationneeded () {
   log.d('发起 sdp 协商')
   await this[createSDP]({ role: 'offer' })
+}
+
+/**
+ * p2p连接事件监听 - p2p 流媒体已移除
+ */
+function onremovestream () {
+  log.d('流媒体已移除')
 }

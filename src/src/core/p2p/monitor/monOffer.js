@@ -1,5 +1,5 @@
 import { judgeType, log } from '../../../index'
-import { P2P } from '../../common/index'
+import { P2P } from '../../base/index'
 import { createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
 import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'

@@ -1,5 +1,5 @@
 import { judgeType, log } from '../../utils/index'
-import { RtcBase } from '../common/base/index'
+import { RtcBase } from '../base/common/index'
 import { createConstraints, getVideoById, getCanvasById, getMedia, isActive } from '../../constants/methods/index'
 
 /**
@@ -24,8 +24,8 @@ export class TakePicture extends RtcBase {
       videoId // video 标签ID
     } = options
 
-    if (isNaN(Number.parseInt(camNo))) {
-      log.e('错误的摄像头序号')
+    if (judgeType('number', camNo)) {
+      log.e('开启拍照失败[参数错误]')
       return false
     }
 

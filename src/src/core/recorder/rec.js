@@ -1,5 +1,5 @@
 import { judgeType } from '../../utils/index'
-import { Recorder } from '../common/index'
+import { Recorder } from '../base/index'
 import { createConstraints, getVideoById, getMedia, setParam } from '../../constants/methods/index'
 
 /**

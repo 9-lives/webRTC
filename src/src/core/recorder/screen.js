@@ -1,9 +1,10 @@
 import { getMedia, setParam } from '../../constants/methods/index'
-import { Recorder } from '../common/index'
+import { Recorder } from '../base/index'
 import { log, judgeType } from '../../utils/index'
 
 const createConstraints = Symbol('createConstraints')
 const sourceId = Symbol('sourceId')
+const timer = Symbol('timer')
 
 /**
  * webRTC 录屏
@@ -12,7 +13,7 @@ export class Screen extends Recorder {
   constructor (options = {}) {
     super(options)
     this[sourceId] = undefined // 获取屏幕流需要的ID
-    this.timer = undefined // 扩展程序定时器(询问、请求授权)
+    this[timer] = undefined // 扩展程序定时器(询问、请求授权)
   }
 
   /**
@@ -36,7 +37,7 @@ export class Screen extends Recorder {
         if (evt.origin === window.location.origin) {
           let data = evt.data
           if (data === 'true') {
-            clearTimeout(this.timer)
+            clearTimeout(this[timer])
             window.postMessage({
               cmd: 'getSourceId',
               aTimeout
@@ -82,7 +83,7 @@ export class Screen extends Recorder {
       window.addEventListener('message', isExisting)
 
       // 询问
-      this.timer = setTimeout(() => {
+      this[timer] = setTimeout(() => {
         remove(fs)
         reject(new Error('连接扩展程序超时'))
       }, cTimeout * 1000)
