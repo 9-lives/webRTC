@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../base/index'
-import { createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addIceCandidate, createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
 import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 
@@ -73,17 +73,11 @@ export class MonOffer extends P2P {
       throw new Error('ice candidate[来自远程] 添加失败[参数错误]')
     }
 
-    try {
-      await this.peerConn.addIceCandidate(new RTCIceCandidate({
-        candidate,
-        sdpMLineIndex,
-        sdpMid
-      }))
-      log.d('ice candidate[来自远程] 已添加到 p2p 连接')
-    } catch (err) {
-      log.e('ice candidate[来自远程] 添加失败')
-      throw err
-    }
+    await super[addIceCandidate]({
+      candidate,
+      sdpMLineIndex,
+      sdpMid
+    })
 
     if (!judgeType('undefined', super[p2pConnTimer])) {
       // 计时器若已启动，复位连接超时计时器

@@ -174,9 +174,7 @@
             width: 480,
             height: 360
           })
-          if (ret === true) {
-            log.d('视频设备已打开')
-          } else {
+          if (ret !== true) {
             log.e('视频设备开启失败')
           }
 

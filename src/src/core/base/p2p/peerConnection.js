@@ -1,7 +1,7 @@
 import { RtcBase } from '../index'
 
 import { judgeType, log } from '../../../utils'
-import { createSDP, errHandler, evtCallBack, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addIceCandidate, createSDP, errHandler, evtCallBack, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
 import { addDCListener } from './dataChannel'
 
 import * as errCode from '../../../constants/errorCode/index'
@@ -57,12 +57,31 @@ export class P2P extends RtcBase {
 
     /**
      * 信令状态改变
-     * 该事件监听在chrome 60 似乎存在BUG，本地测试一定几率观察到浏览器遗漏状态变更，结果是发出两次状态变更到stable事件
-     * 由于可能的chrome bug，放弃在此进行检查或优化
+     * 根据工作草案定义，answer端 have-local-panswer 状态可能被跳过
      */
     // this.peerConn.onsignalingstatechange = () => {}
 
     return true
+  }
+
+  /**
+   * 添加 ice candidate[来自远程]到 p2p 连接
+   * @param {string} candidate 候选地址
+   * @param {number} sdpMLineIndex 行索引
+   * @param {string} sdpMid id
+   */
+  async [addIceCandidate] ({ candidate, sdpMLineIndex, sdpMid }) {
+    try {
+      await this.peerConn.addIceCandidate(new RTCIceCandidate({
+        candidate,
+        sdpMLineIndex,
+        sdpMid
+      }))
+      log.d('ice candidate[来自远程] 已添加到 p2p 连接')
+    } catch (err) {
+      log.e('ice candidate[来自远程] 添加失败')
+      throw err
+    }
   }
 
   /**
@@ -286,7 +305,7 @@ async function oniceconnectionstatechange (evt) {
       break
     /**
       * TODO 查询连接状态，区分正常 / 异常的disconnected、failed，针对性报错
-      * 在上述工作未完成前，后面的两种情况存在BUG
+      * 在上述工作未完成前，后面的两种情况处理不完善
       */
     case 'disconnected':
         // 可能的情况： 1. 远端主动断开连接，稍后本地 ice 连接状态将变为 failed  2. ice 通路故障，若故障修复连接状态将变为 connected,否则 failed

@@ -1,10 +1,9 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../base/index'
-import { createSDP, errHandler, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addIceCandidate, createSDP, errHandler, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
 import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 
-const addIceCandidate = Symbol('addIceCandidate')
 const addIceReady = Symbol('addIceReady')
 const iceBuff = Symbol('addIceReady')
 
@@ -46,20 +45,18 @@ export class MonAnswer extends P2P {
       super[resetP2PConnTimer]()
     }
 
-    let ice = this[iceBuff].pop()
-
-    while (judgeType('object', ice)) {
-      log.d('ice candidate[来自远程] 已添加到 p2p 连接')
-
-      try {
-        await this.peerConn.addIceCandidate(ice)
-      } catch (err) {
-        log.e(err.message)
-        log.e('ice candidate 添加失败')
-      }
-
-      ice = this[iceBuff].pop()
+    // let ice = this[iceBuff].pop()
+    for (let ice of this[iceBuff]) {
+      await super[addIceCandidate](ice)
     }
+
+    // 清空缓冲区
+    this[iceBuff] = []
+    // while (judgeType('object', ice)) {
+    //   console.log('循环')
+    //   await super[addIceCandidate](ice)
+    //   ice = this[iceBuff].pop()
+    // }
   }
 
   /**
@@ -92,22 +89,27 @@ export class MonAnswer extends P2P {
       throw new Error('ice candidate 添加失败[参数错误]')
     }
 
-    log.d('已缓存 ice candidate[来自远程]')
-
     /**
-      * chrome60 尚未实现查询连接状态API，采用临时方案
+      * chrome 60 尚未实现查询连接状态API，采用临时方案
       * ice candidate 存入缓冲区
-      * TODO 检查信令状态，提升 ice 设置速度
+      * 可通过检查信令状态，提升 ice 设置速度？
       */
-    this[iceBuff].push(new RTCIceCandidate({
-      candidate,
-      sdpMLineIndex,
-      sdpMid
-    }))
-
     if (this[addIceReady] === true) {
-      // 如果 answer 设置完毕
-      await this[addIceCandidate]()
+      // 如果 answer 设置完毕, 直接添加ice 候选
+      await super[addIceCandidate]({
+        candidate,
+        sdpMLineIndex,
+        sdpMid
+      })
+    } else {
+      // answer 未设置完毕, 存入缓冲区
+      log.d('已缓存 ice candidate[来自远程]')
+
+      this[iceBuff].push({
+        candidate,
+        sdpMLineIndex,
+        sdpMid
+      })
     }
   }
 }
