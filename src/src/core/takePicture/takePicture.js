@@ -39,10 +39,10 @@ export class TakePicture extends RtcBase {
       return false
     }
 
-    // 获取设备ID
+    // 获取设备信息
     let devInfo = await super._rtcGetDevInfo()
 
-    // 构造 MediaTrackConstraints
+    // 构造流媒体约束
     let constraints = super[createConstraints]({
       options,
       devInfo
@@ -66,12 +66,12 @@ export class TakePicture extends RtcBase {
       return false
     }
 
-    if (this[isActive]()) {
-      this.canvas.getContext('2d').drawImage(this.video, 0, 0, w, h)
-      return true
-    } else {
+    if (!this[isActive]({ stream: this.mediaStream })) {
       log.e('拍照失败[流媒体未激活]')
       return false
     }
+
+    this.canvas.getContext('2d').drawImage(this.video, 0, 0, w, h)
+    return true
   }
 }

@@ -76,7 +76,7 @@
       },
       initP2P () {
         this.answer = new MonAnswer()
-        this.answer.init({
+        let ret = this.answer.init({
           config: {
             iceServers: [
               {
@@ -91,8 +91,11 @@
           }
         })
 
-        this.evtsSubscribe()
-        this.btnClicked = !(this.btnClicked === true)
+        if (ret) {
+          // 初始化成功
+          this.evtsSubscribe()
+          this.btnClicked = !(this.btnClicked === true)
+        }
       },
       // 初始化 websocket[信令通道]
       initWs () {
@@ -157,10 +160,16 @@
           return
         } else if (data.token && data.token === '1005' || data.token === '1007') {
           data = JSON.parse(data.data)
-          if (data.sdp) {
-            await this.answer._rtcP2PRcvSDP(data)
-          } else if (data.candidate) {
-            await this.answer._rtcP2PRcvIceCandidate(data)
+          try {
+            if (data.sdp) {
+              await this.answer._rtcPCAddSDP(data)
+            } else if (data.candidate) {
+              await this.answer._rtcPCAddIceCandidate(data)
+            }
+          } catch (err) {
+            if (err.message) {
+              log.e(err.message)
+            }
           }
         }
       }

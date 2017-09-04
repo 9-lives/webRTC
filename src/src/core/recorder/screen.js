@@ -105,10 +105,10 @@ export class Screen extends Recorder {
    * 初始化
    */
   async start (options = {}) {
-    // 构造 MediaTrackConstraints
+    // 构造流媒体约束
     let constraints = this[createConstraints](options)
 
-    // 获取媒体流
+    // 获取流媒体
     this.mediaStream = await super[getMedia](constraints)
 
     // 设置 MediaRecorder 对象参数

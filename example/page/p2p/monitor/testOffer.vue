@@ -100,7 +100,7 @@
       initP2P () {
         this.offer = new MonOffer()
 
-        this.offer.init({
+        let ret = this.offer.init({
           config: {
             iceServers: [
               {
@@ -115,7 +115,10 @@
           }
         })
 
-        this.evtsSubscribe()
+        if (ret) {
+          // 初始化成功
+          this.evtsSubscribe()
+        }
       },
       // 初始化 websocket[信令通道]
       initWs () {
@@ -198,10 +201,16 @@
           return
         } else if (data.token && data.token === '1005' || data.token === '1007') {
           data = JSON.parse(data.data)
-          if (data.sdp) {
-            await this.offer._rtcP2PRcvSDP(data)
-          } else if (data.candidate) {
-            await this.offer._rtcP2PRcvIceCandidate(data)
+          try {
+            if (data.sdp) {
+              await this.offer._rtcPCAddSDP(data)
+            } else if (data.candidate) {
+              await this.offer._rtcPCAddIceCandidate(data)
+            }
+          } catch (err) {
+            if (err.message) {
+              log.e(err.message)
+            }
           }
         }
       }

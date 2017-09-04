@@ -108,18 +108,18 @@ const MediaBase = Base => class MediaBase extends Base {
    * 检测流状态
    * @returns {boolean} 激活状态 true，终止状态 false
    */
-  [isActive] () {
-    if (!(this.mediaStream instanceof MediaStream)) {
+  [isActive] ({ stream = {} }) {
+    if (!(stream instanceof MediaStream)) {
       log.e('检测媒体流状态失败[媒体流不存在]')
       return false
     }
 
-    if (!judgeType('undefined', this.mediaStream.active)) {
-      return this.mediaStream.active
-    } else {
+    if (judgeType('undefined', stream.active)) {
       log.e('检测媒体流状态失败[active属性未找到]')
       return false
     }
+
+    return stream.active
   }
 }
 

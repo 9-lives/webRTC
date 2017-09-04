@@ -24,16 +24,16 @@ export class Rec extends Recorder {
       if (!this.video) return false
     }
 
-    // 获取设备ID
+    // 获取设备信息
     let devInfo = await super._rtcGetDevInfo()
 
-    // 构造 MediaTrackConstraints
+    // 构造流媒体约束
     let constraints = super[createConstraints]({
       options,
       devInfo
     })
 
-    // 获取媒体流
+    // 获取流媒体
     this.mediaStream = await super[getMedia](constraints)
 
     // video 标签绑定流媒体

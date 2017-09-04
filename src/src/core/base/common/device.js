@@ -12,11 +12,8 @@ export class Device {
     * 获取多媒体IO设备信息
     */
   async _rtcGetDevInfo () {
-    // 多媒体IO设备原始信息
-    let originalInfo = await enumerateDevs()
-    let devInfo = devfilter({
-      originalInfo
-    })
+    let originalInfo = await enumerateDevs() // 多媒体IO设备原始信息
+    let devInfo = devfilter({ originalInfo }) // 多媒体IO设备过滤信息
     let flag // 是否找到视频输入设备
 
     if (devInfo.video.length === 0) {
@@ -158,6 +155,7 @@ function analysisVidPid (label) {
   let right = label.lastIndexOf(')')
 
   if (left === -1 || right === -1) {
+    log.e('解析视频设备 vid、pid 失败')
     return {
       vid: '',
       pid: ''
@@ -248,16 +246,14 @@ function getADevIdByNo ({ devInfo = {}, micNo = 0 }) {
 function getADevIdByLabel ({ devInfo = {}, mLabel = '' }) {
   log.i(`指定音频设备标签 label = ${mLabel}`)
 
-  let info = devInfo.audio.find(dev => {
-    return dev['label'] === mLabel && dev['deviceId']
-  })
+  let info = devInfo.audio.find(dev => dev['label'] === mLabel && dev['deviceId'])
 
   if (!info) {
     log.d('取音频设备ID失败[标签对应设备未找到]')
     return undefined
-  } else {
-    return info['deviceId']
   }
+
+  return info['deviceId']
 }
 
 /**
@@ -269,9 +265,7 @@ function getADevIdByLabel ({ devInfo = {}, mLabel = '' }) {
 function getVDevIdByLabel ({vLabel, devInfo}) {
   log.i(`指定视频设备标签 label = ${vLabel}`)
 
-  let info = devInfo.video.find(dev => {
-    return dev.label === vLabel
-  })
+  let info = devInfo.video.find(dev => dev.label === vLabel)
 
   if (!info) {
     log.d('取视频设备ID失败[标签对应设备未找到]')
@@ -291,16 +285,14 @@ function getVDevIdByLabel ({vLabel, devInfo}) {
 function getVDevIdByIDPair ({ devInfo = {}, pid = '', vid = '' }) {
   log.i(`指定摄像头 vid = ${vid}, pid = ${pid}`)
 
-  let info = devInfo.video.find(dev => {
-    return dev['vid'] === vid && dev['pid'] === pid && dev['deviceId']
-  })
+  let info = devInfo.video.find(dev => dev['vid'] === vid && dev['pid'] === pid && dev['deviceId'])
 
   if (!info) {
     log.d('取视频设备ID失败[pid、vid 对应设备未找到]')
     return undefined
-  } else {
-    return info['deviceId']
   }
+
+  return info['deviceId']
 }
 
 /**

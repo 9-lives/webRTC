@@ -1,6 +1,7 @@
 import { RtcBase } from './index'
+
 import { judgeType, log } from '../../index'
-import { isActive, recStart, setParam } from '../../constants/methods/index'
+import { isActive, evtCallBack, recStart, setParam } from '../../constants/methods/index'
 
   /**
    * webRTC recorder 基础类
@@ -46,31 +47,31 @@ export class Recorder extends RtcBase {
    * @returns {boolean} 启动录制成功 true；失败 false
    */
   rec (options = {}) {
-    if (super[isActive]()) {
-      this.recorder.ondataavailable = ret => {
-        this.evtCallBack({
-          evtName: 'recDataAvail',
-          args: [ret.data],
-          codeName: 'REC_HOOK_DATAAVAIL',
-          errType: 'mediaRecorder'
-        })
-      }
-
-      this.recorder.onstop = ret => {
-        log.d('停止录制')
-
-        this.evtCallBack({
-          evtName: 'recStop',
-          codeName: 'REC_HOOK_STOP',
-          errType: 'mediaRecorder'
-        })
-      }
-
-      return this[recStart](options)
-    } else {
+    if (!super[isActive]({ stream: this.mediaStream })) {
       log.e('录制失败[媒体流未激活]')
       return false
     }
+
+    this.recorder.ondataavailable = ret => {
+      this[evtCallBack]({
+        evtName: 'recDataAvail',
+        args: [ret.data],
+        codeName: 'REC_HOOK_DATAAVAIL',
+        errType: 'mediaRecorder'
+      })
+    }
+
+    this.recorder.onstop = ret => {
+      log.d('停止录制')
+
+      this[evtCallBack]({
+        evtName: 'recStop',
+        codeName: 'REC_HOOK_STOP',
+        errType: 'mediaRecorder'
+      })
+    }
+
+    return this[recStart](options)
   }
 
   /**
@@ -80,23 +81,21 @@ export class Recorder extends RtcBase {
    * @returns {boolean} 启动录制成功 true；失败 false
    */
   [recStart] ({ duration = 0, timeSlice = 0 }) {
-    if (!(judgeType('number', duration, timeSlice) && duration > 0 && timeSlice > 0)) {
+    if (!(judgeType('number', duration, timeSlice) && duration >= 0 && timeSlice >= 0)) {
       log.e('录像初始化失败[录像参数错误]')
       return false
     }
 
-    if (this.recorder.state !== 'recording') {
-      log.d('开始录制')
-      if (timeSlice === 0) {
-        // 不分片
-        this.recorder.start()
-      } else {
-        this.recorder.start(timeSlice * 1000)
-      }
-    } else {
+    if (this.recorder.state === 'recording') {
+      // 录制未完成
       log.e('开启录制失败[已经处于录制状态]')
       return false
     }
+
+    log.d('开始录制')
+
+    timeSlice = timeSlice === 0 ? undefined : timeSlice * 1000
+    this.recorder.start(timeSlice)
 
     if (duration !== 0) {
       // 有限时长
@@ -112,7 +111,7 @@ export class Recorder extends RtcBase {
    * 停止录制
    */
   recStop () {
-    if (MediaRecorder && this.recorder && this.recorder instanceof MediaRecorder) {
+    if (MediaRecorder && this.recorder instanceof MediaRecorder) {
       // chrome 47 以上
       if (this.recorder.state !== 'inactive') {
         this.recorder.stop()
@@ -131,7 +130,7 @@ export class Recorder extends RtcBase {
         super.close()
       }
 
-      this.evtCallBack({
+      this[evtCallBack]({
         evtName: 'recClosed',
         codeName: 'REC_HOOK_CLOSED',
         errType: 'peerConnection'

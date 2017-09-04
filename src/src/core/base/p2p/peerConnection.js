@@ -1,12 +1,12 @@
 import { RtcBase } from '../index'
 
 import { judgeType, log } from '../../../utils'
-import { createSDP, errHandler, pConnInit, resetP2PConnTimer } from '../../../constants/methods/index'
-import { addChannelListener } from './dataChannel'
+import { createSDP, errHandler, evtCallBack, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addDCListener } from './dataChannel'
 
-import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 import * as evtNames from '../../../constants/eventName'
+import { p2pConnTimer } from '../../../constants/property/index'
 import { webRtcConfig } from '../../../../config'
 
 const clearP2PConnTimer = Symbol('clearP2PConnTimer') // 复位 p2p 连接超时计时器
@@ -26,14 +26,15 @@ export class P2P extends RtcBase {
   /**
    * PeerConnection 对象初始化
    * @param {object} options RTCPeerConnection 配置
+   * @returns {boolean} 成功返回 true；失败 false
    */
   [pConnInit] (options = {}) {
     if (!window.RTCPeerConnection) {
-      log.e('RTCPeerConnection API 不存在，请更换浏览器')
-      throw new Error('peerConnection 对象初始化失败')
+      log.e('peerConnection 对象初始化失败[RTCPeerConnection API 不存在]')
+      return false
     }
 
-    this.peerConn = new RTCPeerConnection(options) // p2p 连接对象
+    this.peerConn = new RTCPeerConnection(options) // p2p 连接
 
     this.peerConn.onaddstream = onaddstream.bind(this)
     this.peerConn.ondatachannel = ondatachannel.bind(this)
@@ -60,6 +61,8 @@ export class P2P extends RtcBase {
      * 由于可能的chrome bug，放弃在此进行检查或优化
      */
     // this.peerConn.onsignalingstatechange = () => {}
+
+    return true
   }
 
   /**
@@ -68,6 +71,8 @@ export class P2P extends RtcBase {
    */
   async [createSDP] ({ role }) {
     let sdp
+
+    // 构造本地 SDP
     try {
       switch (role) {
         case 'offer':
@@ -76,37 +81,22 @@ export class P2P extends RtcBase {
         case 'answer':
           sdp = await this.peerConn.createAnswer()
           break
-        default:
-          throw new Error('本地 sdp 生成参数错误')
       }
     } catch (err) {
       log.e(err.message)
-      log.e('本地 sdp 生成失败')
-      await this[errHandler]({
-        type: 'peerConnection',
-        value: err,
-        code: errCode.P2P_SDP_LOCAL_GENERATEDFAILED
-      })
+      throw new Error(`构造本地 ${role} 失败`)
     }
 
     // 设置本地 SDP 后开始搜集 ice candidate
     try {
       await this.peerConn.setLocalDescription(sdp)
     } catch (err) {
-      if (err.message) {
-        log.e(err.message)
-      }
-      log.e('本地 sdp 设置失败')
-
-      await this[errHandler]({
-        type: 'peerConnection',
-        value: err,
-        code: errCode.P2P_SDP_LOCAL_SETFAILED
-      })
+      log.e(err.message)
+      throw new Error(`设置本地 ${role} 设置失败`)
     }
 
     // 发送本地 sdp 到信令服务器
-    this.evtCallBack({
+    this[evtCallBack]({
       evtName: 'pLocalSDPReady',
       args: [this.peerConn.localDescription],
       codeName: 'P2P_HOOK_SDP_LOCAL_READY',
@@ -131,10 +121,11 @@ export class P2P extends RtcBase {
     }
 
     if (super.close) {
+      // rtcBase 层关闭
       super.close()
     }
 
-    this.evtCallBack({
+    this[evtCallBack]({
       evtName: 'pClosed',
       codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
       errType: 'peerConnection'
@@ -174,12 +165,42 @@ export class P2P extends RtcBase {
 
   /**
    * 获取 p2p 连接的远端流媒体
+   * @returns {array | undefined} 成功返回远端流媒体数组；失败返回 undefined
    */
   _rtcGetRemoteStreams () {
-    if (this.peerConn instanceof RTCPeerConnection) {
-      return this.peerConn.getRemoteStreams()
-    } else {
+    if (!(this.peerConn instanceof RTCPeerConnection)) {
       log.e('取远端流媒体失败[p2p连接未找到]')
+      return
+    }
+
+    return this.peerConn.getRemoteStreams()
+  }
+
+/**
+ * 设置远程 sdp
+ * @param {object} data RTCSessionDescription 格式的普通对象
+ * @param {string} type 类型。 answer / offer
+ * @param {string} sdp 会话描述协议
+ * @returns {boolean} 设置成功返回 true；失败 false
+ */
+  async [setRemoteSDP] ({ sdp, type }) {
+    if (!(judgeType('string', sdp, type))) {
+      throw new Error('设置远程 sdp 失败[参数错误]')
+    }
+
+    /**
+      * 由于与序列化后与普通对象一致，RTCSessionDescription 构造器已从工作草案中移除,chrome 59允许直接传入 sdp 格式对象充当参数
+      */
+    try {
+      // 设置 sdp[来自远程]
+      await this.peerConn.setRemoteDescription({
+        type,
+        sdp
+      })
+      log.d(`${type}[来自远程] 设置完毕`)
+    } catch (err) {
+      log.e(err.message)
+      throw new Error(`远程 ${type} 设置失败`)
     }
   }
 }
@@ -191,7 +212,7 @@ export class P2P extends RtcBase {
 function onaddstream (e) {
   log.i('收到远程流媒体：', e.stream)
 
-  this.evtCallBack({
+  this[evtCallBack]({
     evtName: 'pOnAddStream',
     args: [e.stream],
     codeName: 'P2P_HOOK_STREAM_RECEIVED',
@@ -207,7 +228,7 @@ function ondatachannel (e) {
   // 重协商完毕，连接恢复后(iceConnectionState = 'connected')才能收到数据通道对象
   log.d('p2p 数据通道已连接')
   this.dataChannel = e.channel
-  addChannelListener.call(this, { channel: this.dataChannel })
+  addDCListener.call(this, { channel: this.dataChannel })
 }
 
 /**
@@ -219,7 +240,7 @@ function onicecandidate (e) {
     // 本地 ice candidate 上传至服务器
     log.d('ice candidate已采集[本地]')
 
-    this.evtCallBack({
+    this[evtCallBack]({
       evtName: 'pOnIceCandidate',
       args: [e.candidate],
       codeName: 'P2P_HOOK_ICE_GATHERER',
@@ -241,10 +262,10 @@ async function oniceconnectionstatechange (evt) {
       if (this.peerConn.createDataChannel && !this.dataChannel) {
         log.d('正在建立点对点数据通道')
         this.dataChannel = this.peerConn.createDataChannel('rtcDataChannel')
-        addChannelListener.call(this, { channel: this.dataChannel })
+        addDCListener.call(this, { channel: this.dataChannel })
       }
 
-      this.evtCallBack({
+      this[evtCallBack]({
         evtName: 'pIceConnCompleted',
         args: [evt],
         codeName: 'P2P_HOOK_ICE_CONN_COMPLETED',
@@ -256,7 +277,7 @@ async function oniceconnectionstatechange (evt) {
         log.d('p2p ice 连接成功, 清除超时计时器')
       }
 
-      this.evtCallBack({
+      this[evtCallBack]({
         evtName: 'pIceConnConnected',
         args: [evt],
         codeName: 'P2P_HOOK_ICE_CONN_CONNECTED',
@@ -271,7 +292,7 @@ async function oniceconnectionstatechange (evt) {
         // 可能的情况： 1. 远端主动断开连接，稍后本地 ice 连接状态将变为 failed  2. ice 通路故障，若故障修复连接状态将变为 connected,否则 failed
       log.d('p2p ice 连接中断')
 
-      this.evtCallBack({
+      this[evtCallBack]({
         evtName: 'pIceConnDisconnected',
         args: [evt],
         codeName: 'P2P_HOOK_ICE_CONN_DISCONNECTED',
@@ -294,7 +315,12 @@ async function oniceconnectionstatechange (evt) {
  */
 async function onnegotiationneeded () {
   log.d('发起 sdp 协商')
-  await this[createSDP]({ role: 'offer' })
+  try {
+    await this[createSDP]({ role: 'offer' })
+  } catch (err) {
+    log.e(err.message)
+    log.e('sdp 协商失败')
+  }
 }
 
 /**

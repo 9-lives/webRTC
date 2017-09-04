@@ -6,10 +6,10 @@ import { log } from '../../../utils'
  */
 
 /**
- * RTCDatachannel 添加监听
+ * RTCDataChannel 添加监听
  * @returns {boolean} 成功添加返回 true；失败 false
  */
-export function addChannelListener ({ channel }) {
+export function addDCListener ({ channel }) {
   if (!(channel instanceof window.RTCDataChannel)) {
     log.e('添加监听失败[rtcDataChannel未找到]')
     return false

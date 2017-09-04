@@ -1,7 +1,9 @@
-import { errHandler } from '../../../constants/methods/index'
+import { judgeType, log } from '../../../utils/index'
+import { errHandler, evtCallBack } from '../../../constants/methods/index'
+
 import * as evtNames from '../../../constants/eventName'
 import * as errCode from '../../../constants/errorCode/index'
-import { judgeType, log } from '../../../utils/index'
+import { hooks } from '../../../constants/property/index'
 
 /**
  * 钩子函数类
@@ -9,7 +11,7 @@ import { judgeType, log } from '../../../utils/index'
 export const Hook = Base => class Hook extends Base {
   constructor (options = {}) {
     super(options)
-    this.hooks = new Map() // peerConnection， mediaRecorder 事件回调集合, 仅支持一对一
+    this[hooks] = new Map() // peerConnection， mediaRecorder 事件回调集合, 仅支持一对一
   }
 
   /**
@@ -28,7 +30,7 @@ export const Hook = Base => class Hook extends Base {
     for (let [n, f] of Object.entries(pairs)) {
       if (names.indexOf(n) !== -1) {
         // 订阅事件名在事件表中存在
-        this.hooks.set(n, f)
+        this[hooks].set(n, f)
       } else {
         log.e(`webRTC 库订阅 ${n} 事件失败[事件名未找到]`)
         flag = false
@@ -52,8 +54,8 @@ export const Hook = Base => class Hook extends Base {
     // 批量取消订阅
     let flag = true
     for (let nm of names) {
-      if (this.hooks.has(nm)) {
-        this.hooks.delete(nm)
+      if (this[hooks].has(nm)) {
+        this[hooks].delete(nm)
       } else {
         log.e(`webRTC 库取消订阅 ${nm} 事件失败[事件名未找到]`)
         flag = false
@@ -70,16 +72,18 @@ export const Hook = Base => class Hook extends Base {
    * @param {string} codeName 错误代码名
    * @param {string} errType 错误类型 1. 'mediaRecorder' 2. peerConnection
    */
-  async evtCallBack ({evtName = '', args = [], codeName = '', errType = ''}) {
+  async [evtCallBack] ({evtName = '', args = [], codeName = '', errType = ''}) {
     if (!(judgeType('string', evtName, codeName, errType) && args instanceof Array)) {
-      throw new Error('webRTC 库事件回调方法执行失败[参数错误]')
+      log.e('webRTC 库事件回调方法执行失败[参数错误]')
+      return
     }
 
-    let f = this.hooks.get(evtNames[evtName])
+    let f = this[hooks].get(evtNames[evtName])
 
     if (judgeType('function', f)) {
       try {
         await f(...args)
+        return true
       } catch (err) {
         if (err.message) {
           log.e(err.message)
@@ -100,19 +104,20 @@ export const Hook = Base => class Hook extends Base {
    * type: 错误类型。p2p 错误：'peerConnection'；录制 错误：'mediaRecorder'
    */
   async [errHandler] ({ type = '', err = {}, code }) {
-    let f = this.hooks.get(evtNames['errHandler'])
+    let f = this[hooks].get(evtNames['errHandler'])
 
-    if (judgeType('function', f)) {
-      await f({
-        type,
-        value: err,
-        code
-      })
-    } else {
+    if (!judgeType('function', f)) {
       log.e(`webRTC 库发生错误，且尚未指定错误处理回调:
         type = ${type}, code = ${code},
         value = ${err}`
       )
+      return
     }
+
+    await f({
+      type,
+      value: err,
+      code
+    })
   }
 }

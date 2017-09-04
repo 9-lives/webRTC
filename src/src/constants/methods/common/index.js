@@ -13,3 +13,4 @@ export const isActive = Symbol('isActive') // 检测流状态
 
 // Hook 类
 export const errHandler = Symbol('errHandler') // 错误回调
+export const evtCallBack = Symbol('evtCallBack') // 事件回调
