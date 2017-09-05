@@ -1,12 +1,13 @@
 import { log } from '../../../utils'
 
 /**
- * dataChannel 相关
+ * dataChannel 相关(未开发完成)
  * 目前仅兼容chrome 60 及以上版本
  */
 
 /**
  * RTCDataChannel 添加监听
+ * @param {object} channel 数据通道
  * @returns {boolean} 成功添加返回 true；失败 false
  */
 export function addDCListener ({ channel }) {
@@ -15,19 +16,19 @@ export function addDCListener ({ channel }) {
     return false
   }
 
-  this.dataChannel.onopen = () => {
+  channel.onopen = () => {
     log.d('p2p 数据通道已连接')
   }
 
-  this.dataChannel.onmessage = msg => {
+  channel.onmessage = msg => {
     log.i('p2p 数据通道收到消息：', msg)
   }
 
-  this.dataChannel.onerror = evt => {
+  channel.onerror = evt => {
     log.e('p2p 数据通道发生错误：', evt)
   }
 
-  this.dataChannel.onclose = evt => {
+  channel.onclose = evt => {
     log.i('p2p 数据通道关闭：', evt)
   }
 

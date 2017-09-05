@@ -39,7 +39,7 @@
       async begin () {
         try {
           await this.init()
-          await this.connExts()
+          await Promise.all([this.connExts(), this.connWs()])
           await this.start()
         } catch (err) {
           if (err.message) {
@@ -75,9 +75,8 @@
       async init () {
         this.screen = new Screen()
         this.evtsSubscribe()
-        await this.initWs()
       },
-      initWs () {
+      connWs () {
         return new Promise((resolve, reject) => {
           this.ws = new WebSocket(webRtcConfig.rmsUrl)
 
@@ -108,7 +107,7 @@
           })
 
           if (ret !== true) {
-            // 录屏失败处理
+            // 录屏失败
           }
         } catch (err) {
           if (err.message) {
@@ -143,9 +142,7 @@
           videoId: 'screen'
         })
 
-        if (ret === true) {
-          log.d('录屏初始化完毕')
-        } else {
+        if (ret !== true) {
           // 启动录屏失败处理
         }
       },

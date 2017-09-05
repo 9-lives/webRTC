@@ -81,9 +81,9 @@
       async init () {
         this.recorder = new Rec()
         this.evtsSubscribe()
-        await this.initWs()
+        await this.connWs()
       },
-      initWs () {
+      connWs () {
         return new Promise((resolve, reject) => {
           this.ws = new WebSocket(webRtcConfig.rmsUrl)
 

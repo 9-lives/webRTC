@@ -2,6 +2,83 @@ import { judgeType, log } from '../../../index'
 import { createConstraints, getMedia, isActive } from '../../../constants/methods/index'
 import { Device, getVDevId, getADevId } from './index'
 
+// 构造媒体轨约束
+const createMediaTrackConstrains = {
+  /**
+   * 构造音频轨约束
+   * @param {object} options 音频轨约束参数
+   * @param {string} aDevId 音频输入设备ID
+   * @returns {object | boolean} 音频轨约束
+   */
+  audio: function ({ options = {}, aDevId }) {
+    const {
+      channelCount = 2, // 声道
+      echoCancellation = true, // 消除回声
+      sampleRate = 44100, // 采样率
+      sampleSize = 16, // 采样大小
+      volumn = 1.0 // 音量
+    } = options
+
+    if (!judgeType('string', aDevId)) {
+      // 禁用音频轨
+      log.d('音频轨已禁用[硬件ID未找到]')
+      return false
+    }
+
+    // 找到音频设备ID
+    let constraints = {
+      channelCount,
+      deviceId: aDevId,
+      echoCancellation,
+      sampleRate,
+      sampleSize,
+      volumn
+    }
+
+    return constraints
+  },
+
+  /**
+   * 构造视频轨约束
+   * @param {object} options 视频轨约束参数
+   * @param {string} vDevId 视频输入设备ID
+   * @returns {object | boolean} 视频轨约束
+   */
+  video: function ({ options = {}, vDevId }) {
+    const {
+      facingMode, // 视频源指向
+      frameRate = 19, // 理想帧率
+      height = 480, // 理想高度
+      maxFrameRate = 28, // 最大帧率
+      width = 640// 理想宽度
+    } = options
+
+    if (judgeType('undefined', vDevId) && !judgeType('string', facingMode)) {
+      // 禁用视频轨
+      log.d('视频轨已禁用[硬件ID未找到]')
+      return false
+    }
+
+    // 找到视频设备ID或已指定 facingMode
+    let constraints = {
+      frameRate: { ideal: frameRate, max: maxFrameRate },
+      height: { ideal: height },
+      width: { ideal: width }
+    }
+
+    if (judgeType('string', vDevId)) {
+      // 找到视频设备ID
+      Object.assign(constraints, { deviceId: vDevId })
+    } else if (judgeType('string', facingMode)) {
+      // 已指明视频轨朝向
+      log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
+      Object.assign(constraints, { facingMode })
+    }
+
+    return constraints
+  }
+}
+
 /**
  *  webRTC 流媒体类
  *  默认关闭音视频源
@@ -56,13 +133,13 @@ const MediaBase = Base => class MediaBase extends Base {
     })
 
     // 构造音频轨约束
-    audio = createAudioTrackConstraints({
+    audio = createMediaTrackConstrains.audio({
       options,
       aDevId
     })
 
     // 构造视频轨约束
-    video = createVideoTrackConstraints({
+    video = createMediaTrackConstrains.video({
       options,
       vDevId
     })
@@ -121,80 +198,6 @@ const MediaBase = Base => class MediaBase extends Base {
 
     return stream.active
   }
-}
-
-/**
- * 构造音频轨约束
- * @param {object} options 音频轨约束参数
- * @param {string} aDevId 音频输入设备ID
- * @returns {object | boolean} 音频轨约束
- */
-function createAudioTrackConstraints ({ options = {}, aDevId }) {
-  const {
-    channelCount = 2, // 声道
-    echoCancellation = true, // 消除回声
-    sampleRate = 44100, // 采样率
-    sampleSize = 16, // 采样大小
-    volumn = 1.0 // 音量
-  } = options
-
-  if (!judgeType('string', aDevId)) {
-    // 禁用音频轨
-    log.d('音频轨已禁用[硬件ID未找到]')
-    return false
-  }
-
-  // 找到音频设备ID
-  let constraints = {
-    channelCount,
-    deviceId: aDevId,
-    echoCancellation,
-    sampleRate,
-    sampleSize,
-    volumn
-  }
-
-  return constraints
-}
-
-/**
- * 构造视频轨约束
- * @param {object} options 视频轨约束参数
- * @param {string} vDevId 视频输入设备ID
- * @returns {object | boolean} 视频轨约束
- */
-function createVideoTrackConstraints ({ options = {}, vDevId }) {
-  const {
-    facingMode, // 视频源指向
-    frameRate = 19, // 理想帧率
-    height = 480, // 理想高度
-    maxFrameRate = 28, // 最大帧率
-    width = 640// 理想宽度
-  } = options
-
-  if (judgeType('undefined', vDevId) && !judgeType('string', facingMode)) {
-    // 禁用视频轨
-    log.d('视频轨已禁用[硬件ID未找到]')
-    return false
-  }
-
-  // 找到视频设备ID或已指定 facingMode
-  let constraints = {
-    frameRate: { ideal: frameRate, max: maxFrameRate },
-    height: { ideal: height },
-    width: { ideal: width }
-  }
-
-  if (judgeType('string', vDevId)) {
-    // 找到视频设备ID
-    Object.assign(constraints, { deviceId: vDevId })
-  } else if (judgeType('string', facingMode)) {
-    // 已指明视频轨朝向
-    log.i(`指定视频轨朝向 facingMode = ${facingMode}`)
-    Object.assign(constraints, { facingMode })
-  }
-
-  return constraints
 }
 
 /**

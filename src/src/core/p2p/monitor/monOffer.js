@@ -41,7 +41,7 @@ export class MonOffer extends P2P {
     this.mediaStream = await super[getMedia](constraints)
 
     // 添加本地流媒体（已在工作草案中移除）,发起 sdp 协商
-    this.peerConn.addStream(this.mediaStream)
+    this.pc.addStream(this.mediaStream)
 
     return true
   }

@@ -80,8 +80,6 @@
               // 处理连接异常关闭
               this.close()
               break
-            default:
-              break
           }
         }
       },
@@ -95,7 +93,7 @@
       },
       async init () {
         this.initP2P()
-        await this.initWs()
+        await this.connWs()
       },
       initP2P () {
         this.offer = new MonOffer()
@@ -121,7 +119,7 @@
         }
       },
       // 初始化 websocket[信令通道]
-      initWs () {
+      connWs () {
         return new Promise((resolve, reject) => {
           this.ws = new WebSocket(webRtcConfig.rmsUrl)
 

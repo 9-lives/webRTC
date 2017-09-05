@@ -26,9 +26,8 @@ export const Hook = Base => class Hook extends Base {
     }
 
     let flag = true
-    let names = Object.values(evtNames) // 事件表
     for (let [n, f] of Object.entries(pairs)) {
-      if (names.indexOf(n) !== -1) {
+      if (Object.values(evtNames).indexOf(n) !== -1) {
         // 订阅事件名在事件表中存在
         this[hooks].set(n, f)
       } else {
@@ -108,8 +107,8 @@ export const Hook = Base => class Hook extends Base {
 
     if (!judgeType('function', f)) {
       log.e(`webRTC 库发生错误，且尚未指定错误处理回调:
-        type = ${type}, code = ${code},
-        value = ${err}`
+        type： ${type}, code： ${code},
+        value： ${err}`
       )
       return
     }
