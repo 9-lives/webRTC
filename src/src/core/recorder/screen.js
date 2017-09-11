@@ -2,6 +2,8 @@ import { getMedia, setParam } from '../../constants/methods/index'
 import { Recorder } from '../base/index'
 import { log, judgeType } from '../../utils/index'
 
+import { webRtcConfig } from '../../..//config'
+
 const createConstraints = Symbol('createConstraints')
 const sourceId = Symbol('sourceId')
 const timer = Symbol('timer')
@@ -19,12 +21,13 @@ export class Screen extends Recorder {
   /**
    * 连接扩展程序获取屏幕sourceId
    * 发送目标源 '*' 可能存在安全风险
-   * @param {number} cTimeout 连接扩展程序超时时间(秒)
-   * @param {number} aTimeout 授权超时时间(秒)
-   * @returns {promise} promise在得到sourceId时fulfilled
+   * @returns {promise} 得到sourceId时，promise fulfilled
    */
-  connExts ({ cTimeout = 5, aTimeout = 15 }) {
+  connExts () {
     return new Promise((resolve, reject) => {
+      let cTimeout = webRtcConfig.cTimeout // 连接录屏扩展程序超时时间(秒)
+      let aTimeout = webRtcConfig.aTimeout // 录屏授权超时时间(秒)
+
       if (!(judgeType('number', cTimeout, aTimeout) && aTimeout > 0 && cTimeout > 0)) {
         reject(new Error('连接扩展程序失败[参数错误]'))
         return
@@ -34,53 +37,59 @@ export class Screen extends Recorder {
 
       // 询问插件是否存在消息监听函数
       let isExisting = evt => {
-        if (evt.origin === window.location.origin) {
-          let data = evt.data
-          if (data === 'true') {
-            clearTimeout(this[timer])
-            window.postMessage({
-              cmd: 'getSourceId',
-              aTimeout
-            }, '*')
-          }
+        if (evt.origin !== window.location.origin) {
+          return
+        }
+
+        if (evt.data === 'true') {
+          clearTimeout(this[timer])
+          window.postMessage({
+            cmd: 'getSourceId',
+            aTimeout
+          }, '*')
         }
       }
 
       // 获取 sourceId 消息监听函数
       let getSourceId = evt => {
-        if (evt.origin === window.location.origin) {
-          let data = evt.data
+        if (evt.origin !== window.location.origin) {
+          return
+        }
 
-          if (data.status && data.type === 'permission') {
-            // 授权成功
-            this[sourceId] = data.msg
-            resolve(true)
-            remove(fs)
-          } else if (data.status === false) {
-            log.e(data.msg)
+        let data = evt.data
 
-            switch (data.type) {
-              case 'permissionDenied':
-                // 拒绝授权
-                reject(new Error('录屏授权请求被拒绝'))
-                break
-              case 'permissionError':
-                // 授权错误
-                reject(new Error('录屏授权请求失败'))
-                break
-              case 'permissionTimeout':
-                // 授权超时
-                reject(new Error('录屏授权请求超时'))
-                break
-            }
-            remove(fs)
+        if (data.status && data.type === 'permission') {
+          // 授权成功
+          this[sourceId] = data.msg
+          resolve(true)
+          remove(fs)
+        } else if (data.status === false) {
+          log.e(data.msg)
+
+          let txt = ''
+          switch (data.type) {
+            case 'permissionDenied':
+              // 拒绝授权
+              txt = '录屏授权请求被拒绝'
+              break
+            case 'permissionError':
+              // 授权错误
+              txt = '录屏授权请求失败'
+              break
+            case 'permissionTimeout':
+              // 授权超时
+              txt = '录屏授权请求超时'
+              break
           }
+          reject(new Error(txt))
+          remove(fs)
         }
       }
 
       fs.push(getSourceId, isExisting)
-      window.addEventListener('message', getSourceId)
-      window.addEventListener('message', isExisting)
+
+      window.addEventListener('message', getSourceId, false)
+      window.addEventListener('message', isExisting, false)
 
       // 询问
       this[timer] = setTimeout(() => {

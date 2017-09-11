@@ -22,15 +22,13 @@ const pcEvtListener = {
 
     this[evtCallBack]({
       evtName: 'pOnAddStream',
-      args: [e.stream],
-      codeName: 'P2P_HOOK_STREAM_RECEIVED',
-      errType: 'peerConnection'
+      args: [e.stream]
     })
   },
 
   /**
    * 收到数据通道对象
-   * @param {object} 事件对象
+   * @param {object} e 事件对象
    */
   dataChannel: function (e) {
     // 重协商完毕，连接恢复后(iceConnectionState = 'connected')才能收到数据通道对象
@@ -44,14 +42,12 @@ const pcEvtListener = {
    */
   iCandidate: function (e) {
     if (e.candidate) {
-      // 本地 ice candidate 上传至服务器
       log.d('ice candidate已采集[本地]')
 
+      // 本地 ice candidate 上传至服务器
       this[evtCallBack]({
         evtName: 'pOnIceCandidate',
-        args: [e.candidate],
-        codeName: 'P2P_HOOK_ICE_GATHERER',
-        errType: 'peerConnection'
+        args: [e.candidate]
       })
     }
   },
@@ -88,17 +84,9 @@ const pcEvtListener = {
   iConnStateCompleted: function (evt) {
     log.d('ice candidate 搜集完毕')
 
-    // if (this.pc.createDataChannel && !this.dc) {
-    //   log.d('正在建立点对点数据通道')
-    //   this.dc = this.pc.createDataChannel('rtcDataChannel')
-    //   addDCListener.call(this, { channel: this.dc })
-    // }
-
     this[evtCallBack]({
       evtName: 'pIceConnCompleted',
-      args: [evt],
-      codeName: 'P2P_HOOK_ICE_CONN_COMPLETED',
-      errType: 'peerConnection'
+      args: [evt]
     })
   },
 
@@ -113,9 +101,7 @@ const pcEvtListener = {
 
     this[evtCallBack]({
       evtName: 'pIceConnConnected',
-      args: [evt],
-      codeName: 'P2P_HOOK_ICE_CONN_CONNECTED',
-      errType: 'peerConnection'
+      args: [evt]
     })
   },
 
@@ -128,9 +114,7 @@ const pcEvtListener = {
 
     this[evtCallBack]({
       evtName: 'pIceConnDisconnected',
-      args: [evt],
-      codeName: 'P2P_HOOK_ICE_CONN_DISCONNECTED',
-      errType: 'peerConnection'
+      args: [evt]
     })
   },
 
@@ -141,7 +125,7 @@ const pcEvtListener = {
   iConnStateFailed: async function () {
     log.e('p2p ice 连接异常关闭')
 
-    await this[errHandler]({
+    this[errHandler]({
       type: 'peerConnection',
       code: errCode.P2P_ICECONN_FAILED
     })
@@ -155,8 +139,12 @@ const pcEvtListener = {
     try {
       await this[createSDP]({ role: 'offer' })
     } catch (err) {
-      log.e(err.message)
-      log.e('sdp 协商失败')
+      log.e('发起 sdp 协商失败')
+      this[errHandler]({
+        type: 'peerConnection',
+        err,
+        code: errCode.P2P_STARTNGO_FAILED
+      })
     }
   },
 
@@ -201,7 +189,7 @@ export class P2P extends RtcBase {
   }
 
   /**
-   * 创建并设置本地 SDP 信令
+   * 生成并设置本地 SDP 信令
    * @param {string} role 角色。 offer 或 answer
    */
   async [createSDP] ({ role }) {
@@ -218,24 +206,22 @@ export class P2P extends RtcBase {
           break
       }
     } catch (err) {
-      log.e(err.message)
-      throw new Error(`构造本地 ${role} 失败`)
+      log.e(`生成本地 ${role} 失败`)
+      throw err
     }
 
     // 设置本地 SDP 后开始搜集 ice candidate
     try {
       await this.pc.setLocalDescription(sdp)
     } catch (err) {
-      log.e(err.message)
-      throw new Error(`设置本地 ${role} 设置失败`)
+      log.e(`设置本地 ${role} 设置失败`)
+      throw err
     }
 
     // 发送本地 sdp 到信令服务器
     this[evtCallBack]({
       evtName: 'pLocalSDPReady',
-      args: [this.pc.localDescription],
-      codeName: 'P2P_HOOK_SDP_LOCAL_READY',
-      errType: 'peerConnection'
+      args: [this.pc.localDescription]
     })
   }
 
@@ -250,14 +236,6 @@ export class P2P extends RtcBase {
 
     this[clearPcTimer]()
 
-    // if (this.dc && this.dc.readyState !== 'closed') {
-    //   // 数据通道已连接
-    //   this.dc.send(JSON.stringify({
-    //     CMDID: '1'
-    //   }))
-    //   this.dc.close()
-    // }
-
     if (this.pc.signalingState !== 'closed') {
       log.d('p2p 连接已关闭')
       this.pc.close()
@@ -269,9 +247,7 @@ export class P2P extends RtcBase {
     }
 
     this[evtCallBack]({
-      evtName: 'pClosed',
-      codeName: 'P2P_HOOK_CONN_CLOSED_FAILED',
-      errType: 'peerConnection'
+      evtName: 'pClosed'
     })
 
     return true
@@ -300,7 +276,7 @@ export class P2P extends RtcBase {
       log.e('p2p建立连接超时')
       this[p2pConnTimer] = undefined
 
-      await this[errHandler]({
+      this[errHandler]({
         type: 'peerConnection',
         code: errCode.P2P_ICECONN_ESTABLISH_TIMEOUT
       })

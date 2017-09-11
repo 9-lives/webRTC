@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../base/index'
-import { addIceCandidate, createSDP, errHandler, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addIceCandidate, createSDP, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
 import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 
@@ -45,18 +45,12 @@ export class MonAnswer extends P2P {
       super[resetP2PConnTimer]()
     }
 
-    // let ice = this[iceBuff].pop()
     for (let ice of this[iceBuff]) {
       await super[addIceCandidate](ice)
     }
 
     // 清空缓冲区
     this[iceBuff] = []
-    // while (judgeType('object', ice)) {
-    //   console.log('循环')
-    //   await super[addIceCandidate](ice)
-    //   ice = this[iceBuff].pop()
-    // }
   }
 
   /**
@@ -96,6 +90,7 @@ export class MonAnswer extends P2P {
       */
     if (this[addIceReady] === true) {
       // 如果 answer 设置完毕, 直接添加ice 候选
+      // 未复位addIceReady 标识（bug）
       await super[addIceCandidate]({
         candidate,
         sdpMLineIndex,

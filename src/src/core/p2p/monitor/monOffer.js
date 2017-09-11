@@ -1,6 +1,6 @@
 import { judgeType, log } from '../../../index'
 import { P2P } from '../../base/index'
-import { addIceCandidate, createConstraints, errHandler, getMedia, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
+import { addIceCandidate, createConstraints, getMedia, pConnInit, resetP2PConnTimer, setRemoteSDP } from '../../../constants/methods/index'
 import { p2pConnTimer } from '../../../constants/property/index'
 import * as errCode from '../../../constants/errorCode/index'
 
@@ -40,7 +40,7 @@ export class MonOffer extends P2P {
     // 获取流媒体
     this.mediaStream = await super[getMedia](constraints)
 
-    // 添加本地流媒体（已在工作草案中移除）,发起 sdp 协商
+    // 添加本地流媒体（已在工作草案中移除）并发起 sdp 协商
     this.pc.addStream(this.mediaStream)
 
     return true

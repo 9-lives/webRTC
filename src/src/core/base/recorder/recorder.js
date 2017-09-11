@@ -1,7 +1,7 @@
-import { RtcBase } from './index'
+import { RtcBase } from '../index'
 
-import { judgeType, log } from '../../index'
-import { isActive, evtCallBack, recStart, setParam } from '../../constants/methods/index'
+import { judgeType, log } from '../../../index'
+import { isActive, evtCallBack, recStart, setParam } from '../../../constants/methods/index'
 
   /**
    * webRTC recorder 基础类
@@ -55,9 +55,7 @@ export class Recorder extends RtcBase {
     this.recorder.ondataavailable = ret => {
       this[evtCallBack]({
         evtName: 'recDataAvail',
-        args: [ret.data],
-        codeName: 'REC_HOOK_DATAAVAIL',
-        errType: 'mediaRecorder'
+        args: [ret.data]
       })
     }
 
@@ -65,9 +63,7 @@ export class Recorder extends RtcBase {
       log.d('停止录制')
 
       this[evtCallBack]({
-        evtName: 'recStop',
-        codeName: 'REC_HOOK_STOP',
-        errType: 'mediaRecorder'
+        evtName: 'recStop'
       })
     }
 
@@ -131,9 +127,7 @@ export class Recorder extends RtcBase {
       }
 
       this[evtCallBack]({
-        evtName: 'recClosed',
-        codeName: 'REC_HOOK_CLOSED',
-        errType: 'peerConnection'
+        evtName: 'recClosed'
       })
     }
   }

@@ -19,15 +19,9 @@ export class TakePicture extends RtcBase {
    */
   async start (options = {}) {
     const {
-      camNo = 0, // 摄像头序号
       canvasId, // canvas 标签ID
       videoId // video 标签ID
     } = options
-
-    if (judgeType('number', camNo)) {
-      log.e('开启拍照失败[参数错误]')
-      return false
-    }
 
     this.video = super[getVideoById](videoId)
     if (!this.video) {

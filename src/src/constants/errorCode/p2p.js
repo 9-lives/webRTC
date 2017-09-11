@@ -3,13 +3,4 @@
  */
 export const P2P_ICECONN_FAILED = -2001 // ice 连接异常关闭
 export const P2P_ICECONN_ESTABLISH_TIMEOUT = -2005 // 建立ice连接超时
-
-/**
- * p2p 事件回调执行失败
- */
-export const P2P_HOOK_ICE_GATHERER = -2100 // ice candidate 采集回调执行失败
-export const P2P_HOOK_STREAM_RECEIVED = -2101 // 收到远程流媒体回调执行失败
-export const P2P_HOOK_ICE_CONN_COMPLETED = -2102 // ice连接 ice candidate 搜索完毕回调执行失败
-export const P2P_HOOK_SDP_LOCAL_READY = -2103 // 本地 SDP 就绪回调执行失败
-export const P2P_HOOK_ICE_CONN_CONNECTED = -2104 // ice连接成功回调执行失败
-export const P2P_HOOK_ICE_CONN_DISCONNECTED = -2105 // ice连接中断回调执行失败
+export const P2P_STARTNGO_FAILED = -2002 // 发起sdp协商失败

@@ -71,8 +71,8 @@ export const Hook = Base => class Hook extends Base {
    * @param {string} codeName 错误代码名
    * @param {string} errType 错误类型 1. 'mediaRecorder' 2. peerConnection
    */
-  async [evtCallBack] ({evtName = '', args = [], codeName = '', errType = ''}) {
-    if (!(judgeType('string', evtName, codeName, errType) && args instanceof Array)) {
+  async [evtCallBack] ({evtName = '', args = []}) {
+    if (!(judgeType('string', evtName) && args instanceof Array)) {
       log.e('webRTC 库事件回调方法执行失败[参数错误]')
       return
     }
@@ -87,13 +87,7 @@ export const Hook = Base => class Hook extends Base {
         if (err.message) {
           log.e(err.message)
         }
-        log.e(`${errType} ${evtNames[evtName]} 回调异常`)
-
-        await this[errHandler]({
-          type: errType,
-          err,
-          code: errCode[codeName]
-        })
+        log.e(`${evtNames[evtName]} 回调异常`)
       }
     }
   }
@@ -102,7 +96,7 @@ export const Hook = Base => class Hook extends Base {
    * 错误回调
    * type: 错误类型。p2p 错误：'peerConnection'；录制 错误：'mediaRecorder'
    */
-  async [errHandler] ({ type = '', err = {}, code }) {
+  [errHandler] ({ type = '', err = {}, code }) {
     let f = this[hooks].get(evtNames['errHandler'])
 
     if (!judgeType('function', f)) {
@@ -113,7 +107,7 @@ export const Hook = Base => class Hook extends Base {
       return
     }
 
-    await f({
+    f({
       type,
       value: err,
       code

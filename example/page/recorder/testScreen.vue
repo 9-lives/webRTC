@@ -138,9 +138,7 @@
       },
       // 准备录制
       async start () {
-        let ret = await this.screen.start({
-          videoId: 'screen'
-        })
+        let ret = await this.screen.start()
 
         if (ret !== true) {
           // 启动录屏失败处理
