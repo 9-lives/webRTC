@@ -10,7 +10,7 @@
 </template>
 <script>
   import { selectLabel, goHome } from '@/components/ui/index'
-  import { MonOffer } from 'webRTC/src/core/p2p/monitor/index'
+  import { MonOffer } from 'webRTC/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../../config'
   import * as errCode from 'webRTC/src/constants/errorCode/index'

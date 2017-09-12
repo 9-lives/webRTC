@@ -2,7 +2,7 @@ import { getMedia, setParam } from '../../constants/methods/index'
 import { Recorder } from '../base/index'
 import { log, judgeType } from '../../utils/index'
 
-import { webRtcConfig } from '../../..//config'
+import { webRtcConfig } from '../../../config'
 
 const createConstraints = Symbol('createConstraints')
 const sourceId = Symbol('sourceId')

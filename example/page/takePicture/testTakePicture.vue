@@ -15,7 +15,7 @@
 </template>
 <script>
   import { selectLabel, goHome } from '@/components/ui/index'
-  import { TakePicture } from 'webRTC/src/core/index'
+  import { TakePicture } from 'webRTC/index'
   import { log } from 'webRTC/src/utils/index'
   export default {
     components: {

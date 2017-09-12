@@ -28,9 +28,5 @@ export const webRtcConfig = {
    * 机器人监控认证信息
    */
   turnUser: 'szzt',
-  credential: '123456',
-  /**
-   * p2p 建立连接超时时间(秒)
-   */
-  p2pConnTimeout: 15
+  credential: '123456'
 }

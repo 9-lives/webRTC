@@ -12,7 +12,7 @@
 </template>
 <script>
   import { goHome } from '@/components/ui/index'
-  import { Screen } from 'webRTC/src/core/index'
+  import { Screen } from 'webRTC/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../config'
   export default {

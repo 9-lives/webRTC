@@ -16,7 +16,7 @@
 </template>
 <script>
   import { selectLabel, goHome } from '@/components/ui/index'
-  import { Rec } from 'webRTC/src/core/index'
+  import { Rec } from 'webRTC/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../config'
   export default {

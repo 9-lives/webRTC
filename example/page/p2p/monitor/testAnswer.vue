@@ -12,7 +12,7 @@
 </template>
 <script>
   import { goHome } from '@/components/ui/index'
-  import { MonAnswer } from 'webRTC/src/core/p2p/monitor/index'
+  import { MonAnswer } from 'webRTC/index'
   import { log } from 'webRTC/src/utils/index'
   import { webRtcConfig } from '../../../config'
   import * as errCode from 'webRTC/src/constants/errorCode/index'
