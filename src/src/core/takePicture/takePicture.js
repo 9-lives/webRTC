@@ -5,10 +5,6 @@ import { createConstraints, getVideoById, getCanvasById, getMedia, isActive } fr
 /**
  * webRTC 拍照
  */
-
-/**
- * 开启设备
- */
 export class TakePicture extends RtcBase {
   constructor (options = {}) {
     super(options)
