@@ -58,10 +58,7 @@
       },
       // 连接扩展程序
       async connExts () {
-        let ret = await this.screen.connExts({
-          cTimeout: 5, // 连接扩展超时时间(秒)
-          aTimeout: 15 // 请求授权超时时间(秒)
-        })
+        let ret = await this.screen.connExts()
 
         if (ret === true) {
           log.d('sourceId 获取成功')
